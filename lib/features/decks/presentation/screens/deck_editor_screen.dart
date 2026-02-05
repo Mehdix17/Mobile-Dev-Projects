@@ -1,0 +1,475 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+
+import '../../data/models/deck_model.dart';
+import '../providers/deck_provider.dart';
+import '../../../../core/utils/extensions/context_extensions.dart';
+
+class DeckEditorScreen extends ConsumerStatefulWidget {
+  final String? deckId;
+
+  const DeckEditorScreen({super.key, this.deckId});
+
+  @override
+  ConsumerState<DeckEditorScreen> createState() => _DeckEditorScreenState();
+}
+
+class _DeckEditorScreenState extends ConsumerState<DeckEditorScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+
+  DeckColor _selectedColor = DeckColor.blue;
+  String _selectedIcon = '📚';
+  String? _frontLanguage;
+  String? _backLanguage;
+  bool _isLoading = false;
+  DeckModel? _existingDeck;
+
+  // Language to flag emoji mapping
+  static const Map<String, String> _languageFlags = {
+    'English': '🇬🇧',
+    'French': '🇫🇷',
+    'Spanish': '🇪🇸',
+    'German': '🇩🇪',
+    'Italian': '🇮🇹',
+    'Portuguese': '🇵🇹',
+    'Russian': '🇷🇺',
+    'Chinese': '🇨🇳',
+    'Japanese': '🇯🇵',
+    'Korean': '🇰🇷',
+    'Arabic': '🇸🇦',
+    'Hindi': '🇮🇳',
+    'Turkish': '🇹🇷',
+    'Dutch': '🇳🇱',
+    'Polish': '🇵🇱',
+    'Swedish': '🇸🇪',
+    'Norwegian': '🇳🇴',
+    'Danish': '🇩🇰',
+    'Finnish': '🇫🇮',
+    'Greek': '🇬🇷',
+    'Czech': '🇨🇿',
+    'Romanian': '🇷🇴',
+    'Hungarian': '🇭🇺',
+    'Ukrainian': '🇺🇦',
+    'Thai': '🇹🇭',
+    'Vietnamese': '🇻🇳',
+    'Indonesian': '🇮🇩',
+    'Malay': '🇲🇾',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.deckId != null) {
+      _loadDeck();
+    }
+  }
+
+  Future<void> _loadDeck() async {
+    final deck = await ref.read(deckRepositoryProvider).getDeck(widget.deckId!);
+    if (deck != null && mounted) {
+      setState(() {
+        _existingDeck = deck;
+        _nameController.text = deck.name;
+        _descriptionController.text = deck.description;
+        _selectedColor = deck.color;
+        _selectedIcon = deck.icon;
+        // Find language from emoji
+        _frontLanguage = deck.frontEmoji != null
+            ? _languageFlags.entries
+                .firstWhere(
+                  (e) => e.value == deck.frontEmoji,
+                  orElse: () => const MapEntry('', ''),
+                )
+                .key
+            : null;
+        _backLanguage = deck.backEmoji != null
+            ? _languageFlags.entries
+                .firstWhere(
+                  (e) => e.value == deck.backEmoji,
+                  orElse: () => const MapEntry('', ''),
+                )
+                .key
+            : null;
+        if (_frontLanguage?.isEmpty == true) _frontLanguage = null;
+        if (_backLanguage?.isEmpty == true) _backLanguage = null;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isEditing = widget.deckId != null;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(isEditing ? 'Edit Deck' : 'New Deck'),
+        actions: [
+          TextButton(
+            onPressed: _isLoading ? null : _saveDeck,
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Save'),
+          ),
+        ],
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Preview card
+            _buildPreviewCard(theme),
+            const SizedBox(height: 24),
+
+            // Name field
+            TextFormField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Deck Name',
+                hintText: 'e.g., Essential Vocabulary',
+              ),
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.next,
+              enableSuggestions: true,
+              autocorrect: false,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter a deck name';
+                }
+                if (value.length > 50) {
+                  return 'Name must be 50 characters or less';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Description field
+            TextFormField(
+              controller: _descriptionController,
+              decoration: const InputDecoration(
+                labelText: 'Description (optional)',
+                hintText: 'What is this deck about?',
+              ),
+              keyboardType: TextInputType.multiline,
+              textInputAction: TextInputAction.newline,
+              enableSuggestions: true,
+              autocorrect: true,
+              maxLines: 3,
+            ),
+            const SizedBox(height: 24),
+
+            // Icon selector
+            Text(
+              'Icon',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: () => _showEmojiPicker(context),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: theme.colorScheme.outline.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      _selectedIcon,
+                      style: const TextStyle(fontSize: 32),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Tap to select emoji',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.edit,
+                      color: theme.colorScheme.onSurfaceVariant,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Card languages section
+            Text(
+              'Card Languages (optional)',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Select languages to show country flags on cards',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildLanguageDropdown(
+                    theme,
+                    'Front Card Language',
+                    _frontLanguage,
+                    (language) => setState(() => _frontLanguage = language),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildLanguageDropdown(
+                    theme,
+                    'Back Card Language',
+                    _backLanguage,
+                    (language) => setState(() => _backLanguage = language),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Color selector
+            Text(
+              'Color',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: DeckColor.values.map((color) {
+                final isSelected = color == _selectedColor;
+                return InkWell(
+                  onTap: () => setState(() => _selectedColor = color),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Color(color.colorValue),
+                      borderRadius: BorderRadius.circular(12),
+                      border: isSelected
+                          ? Border.all(
+                              color: theme.colorScheme.onSurface,
+                              width: 3,
+                            )
+                          : null,
+                    ),
+                    child: isSelected
+                        ? const Icon(Icons.check, color: Colors.white)
+                        : null,
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPreviewCard(ThemeData theme) {
+    final color = Color(_selectedColor.colorValue);
+    final name =
+        _nameController.text.isEmpty ? 'Deck Name' : _nameController.text;
+
+    return Container(
+      height: 120,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color.withValues(alpha: 0.8), color],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(_selectedIcon, style: const TextStyle(fontSize: 32)),
+            Text(
+              name,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveDeck() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final now = DateTime.now();
+
+      if (_existingDeck != null) {
+        // Update existing deck
+        final updated = _existingDeck!.copyWith(
+          name: _nameController.text.trim(),
+          description: _descriptionController.text.trim(),
+          color: _selectedColor,
+          icon: _selectedIcon,
+          frontEmoji:
+              _frontLanguage != null ? _languageFlags[_frontLanguage] : null,
+          backEmoji:
+              _backLanguage != null ? _languageFlags[_backLanguage] : null,
+          updatedAt: now,
+        );
+        await ref.read(deckListProvider.notifier).updateDeck(updated);
+      } else {
+        // Create new deck
+        final deck = DeckModel.create(
+          name: _nameController.text.trim(),
+          description: _descriptionController.text.trim(),
+          color: _selectedColor,
+          icon: _selectedIcon,
+          frontEmoji:
+              _frontLanguage != null ? _languageFlags[_frontLanguage] : null,
+          backEmoji:
+              _backLanguage != null ? _languageFlags[_backLanguage] : null,
+        );
+        await ref.read(deckListProvider.notifier).createDeck(deck);
+      }
+
+      if (mounted) {
+        context.showSuccessSnackBar(
+          _existingDeck != null ? 'Deck updated!' : 'Deck created!',
+        );
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        context.showErrorSnackBar('Error saving deck: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _showEmojiPicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SizedBox(
+        height: 300,
+        child: EmojiPicker(
+          onEmojiSelected: (category, emoji) {
+            setState(() => _selectedIcon = emoji.emoji);
+            Navigator.pop(ctx);
+          },
+          config: const Config(
+            emojiViewConfig: EmojiViewConfig(
+              columns: 7,
+              emojiSizeMax: 32,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageDropdown(
+    ThemeData theme,
+    String label,
+    String? selectedLanguage,
+    void Function(String?) onSelect,
+  ) {
+    final sortedLanguages = _languageFlags.keys.toList()..sort();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          initialValue: selectedLanguage,
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          hint: const Text('Select language'),
+          isExpanded: true,
+          items: [
+            const DropdownMenuItem<String>(value: null, child: Text('None')),
+            ...sortedLanguages.map((language) {
+              return DropdownMenuItem<String>(
+                value: language,
+                child: Row(
+                  children: [
+                    Text(
+                      _languageFlags[language]!,
+                      style: const TextStyle(fontSize: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(language),
+                  ],
+                ),
+              );
+            }),
+          ],
+          onChanged: onSelect,
+        ),
+      ],
+    );
+  }
+}
