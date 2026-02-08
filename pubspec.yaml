@@ -1,4 +1,4 @@
-name: english_flashcard_app
+name: cardly
 description: Cardly - Smart flashcard app for learning any topic with spaced repetition
 publish_to: "none"
 version: 1.0.0+1
@@ -78,6 +78,7 @@ flutter:
   assets:
     - assets/icons/
     - assets/images/
+    - assets/predefined_decks/
 
   fonts:
     - family: Inter

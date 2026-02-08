@@ -35,7 +35,7 @@ class QuickStatsCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '${(stats.overallProgress * 100).toStringAsFixed(0)}% mastered',
+                  '${(stats.overallProgress).toStringAsFixed(0)}% mastered',
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w600,
@@ -74,7 +74,7 @@ class QuickStatsCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: stats.overallProgress,
+              value: stats.overallProgress / 100,
               minHeight: 8,
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
             ),

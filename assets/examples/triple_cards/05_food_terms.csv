@@ -1,0 +1,11 @@
+face1,face2,face3,frontHint,labels
+Water,Eau,Agua,Essential liquid,language food
+Bread,Pain,Pan,Staple food,language food
+Cheese,Fromage,Queso,Dairy product,language food dairy
+Wine,Vin,Vino,Alcoholic beverage,language food drink
+Coffee,Café,Café,Hot beverage,language food drink
+Tea,Thé,Té,Hot beverage,language food drink
+Milk,Lait,Leche,Dairy drink,language food dairy
+Sugar,Sucre,Azúcar,Sweetener,language food
+Salt,Sel,Sal,Seasoning,language food
+Butter,Beurre,Mantequilla,Dairy spread,language food dairy

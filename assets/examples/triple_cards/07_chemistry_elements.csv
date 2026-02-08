@@ -1,0 +1,11 @@
+face1,face2,face3,frontHint,labels
+Hydrogen,H,1,First element - Name/Symbol/Atomic Number,science chemistry element
+Helium,He,2,Noble gas,science chemistry element
+Carbon,C,6,Basis of life,science chemistry element
+Nitrogen,N,7,78% of atmosphere,science chemistry element
+Oxygen,O,8,Essential for breathing,science chemistry element
+Sodium,Na,11,Salt component,science chemistry element
+Iron,Fe,26,Magnetic metal,science chemistry element metal
+Gold,Au,79,Precious metal,science chemistry element metal
+Silver,Ag,47,Precious metal,science chemistry element metal
+Uranium,U,92,Radioactive,science chemistry element

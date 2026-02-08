@@ -30,6 +30,7 @@ class SoundService {
       _tempDir = dir.path;
       _isInitialized = true;
     } catch (e) {
+      // Ignore initialization errors - sound will just be disabled
     }
   }
 
@@ -37,16 +38,24 @@ class SoundService {
   Future<void> playCorrect() async {
     if (!soundEnabled) return;
     HapticFeedback.lightImpact();
-    await _playChord('correct', [523.25, 659.25, 783.99], 200,
-        decay: true,); // C-E-G major chord
+    await _playChord(
+      'correct',
+      [523.25, 659.25, 783.99],
+      200,
+      decay: true,
+    ); // C-E-G major chord
   }
 
   /// Play a failure/incorrect sound - soft descending tone
   Future<void> playIncorrect() async {
     if (!soundEnabled) return;
     HapticFeedback.lightImpact();
-    await _playTone('incorrect', 349.23, 180,
-        waveType: WaveType.soft,); // F4, softer
+    await _playTone(
+      'incorrect',
+      349.23,
+      180,
+      waveType: WaveType.soft,
+    ); // F4, softer
   }
 
   /// Play a card flip sound - soft whoosh/page turn
@@ -149,13 +158,19 @@ class SoundService {
   Future<void> playRatingEasy() async {
     if (!soundEnabled) return;
     HapticFeedback.lightImpact();
-    await _playChord('rating_easy', [523.25, 659.25, 783.99], 180,
-        decay: true,); // C-E-G
+    await _playChord(
+      'rating_easy',
+      [523.25, 659.25, 783.99],
+      180,
+      decay: true,
+    ); // C-E-G
   }
 
   /// Play a melody (sequence of notes)
   Future<void> _playMelody(
-      String cacheKey, List<(double freq, int duration)> notes,) async {
+    String cacheKey,
+    List<(double freq, int duration)> notes,
+  ) async {
     try {
       await _ensureInitialized();
       if (_player == null || _tempDir == null) return;
@@ -175,13 +190,17 @@ class SoundService {
       await _player!.stop();
       await _player!.play(DeviceFileSource(filePath));
     } catch (e) {
+      // Ignore playback errors - sound will just not play
     }
   }
 
   /// Play a chord (multiple notes together)
   Future<void> _playChord(
-      String cacheKey, List<double> frequencies, int durationMs,
-      {bool decay = false,}) async {
+    String cacheKey,
+    List<double> frequencies,
+    int durationMs, {
+    bool decay = false,
+  }) async {
     try {
       await _ensureInitialized();
       if (_player == null || _tempDir == null) return;
@@ -192,8 +211,11 @@ class SoundService {
         const int sampleRate = 44100;
         final int numSamples = (sampleRate * durationMs / 1000).round();
         final audioData = _generateChordWavData(
-            frequencies, numSamples, sampleRate,
-            decay: decay,);
+          frequencies,
+          numSamples,
+          sampleRate,
+          decay: decay,
+        );
 
         filePath = '$_tempDir/sound_$cacheKey.wav';
         final file = File(filePath);
@@ -204,6 +226,7 @@ class SoundService {
       await _player!.stop();
       await _player!.play(DeviceFileSource(filePath));
     } catch (e) {
+      // Ignore playback errors - sound will just not play
     }
   }
 
@@ -229,13 +252,17 @@ class SoundService {
       await _player!.stop();
       await _player!.play(DeviceFileSource(filePath));
     } catch (e) {
-      print('Audio playback error: $e');
+      // Ignore audio playback errors - sound will just not play
     }
   }
 
   /// Play a simple tone with wave type
-  Future<void> _playTone(String cacheKey, double frequency, int durationMs,
-      {WaveType waveType = WaveType.sine,}) async {
+  Future<void> _playTone(
+    String cacheKey,
+    double frequency,
+    int durationMs, {
+    WaveType waveType = WaveType.sine,
+  }) async {
     try {
       await _ensureInitialized();
       if (_player == null || _tempDir == null) return;
@@ -245,8 +272,12 @@ class SoundService {
       if (filePath == null || !File(filePath).existsSync()) {
         const int sampleRate = 44100;
         final int numSamples = (sampleRate * durationMs / 1000).round();
-        final audioData = _generateWavData(frequency, numSamples, sampleRate,
-            waveType: waveType,);
+        final audioData = _generateWavData(
+          frequency,
+          numSamples,
+          sampleRate,
+          waveType: waveType,
+        );
 
         filePath = '$_tempDir/sound_$cacheKey.wav';
         final file = File(filePath);
@@ -257,13 +288,15 @@ class SoundService {
       await _player!.stop();
       await _player!.play(DeviceFileSource(filePath));
     } catch (e) {
-      print('Audio playback error: $e');
+      // Ignore audio playback errors - sound will just not play
     }
   }
 
   /// Generate melody WAV data
   Uint8List _generateMelodyWavData(
-      List<(double freq, int duration)> notes, int sampleRate,) {
+    List<(double freq, int duration)> notes,
+    int sampleRate,
+  ) {
     // Calculate total samples
     int totalSamples = 0;
     for (final note in notes) {
@@ -288,7 +321,10 @@ class SoundService {
         final int sample = (value * envelope * 32767 * 0.5).round();
 
         pcmData.setInt16(
-            (sampleOffset + i) * 2, sample.clamp(-32768, 32767), Endian.little,);
+          (sampleOffset + i) * 2,
+          sample.clamp(-32768, 32767),
+          Endian.little,
+        );
       }
       sampleOffset += noteSamples;
     }
@@ -298,8 +334,11 @@ class SoundService {
 
   /// Generate chord WAV data (multiple frequencies)
   Uint8List _generateChordWavData(
-      List<double> frequencies, int numSamples, int sampleRate,
-      {bool decay = false,}) {
+    List<double> frequencies,
+    int numSamples,
+    int sampleRate, {
+    bool decay = false,
+  }) {
     final pcmData = ByteData(numSamples * 2);
 
     for (int i = 0; i < numSamples; i++) {
@@ -354,8 +393,12 @@ class SoundService {
   }
 
   /// Generate WAV file data with different wave types
-  Uint8List _generateWavData(double frequency, int numSamples, int sampleRate,
-      {WaveType waveType = WaveType.sine,}) {
+  Uint8List _generateWavData(
+    double frequency,
+    int numSamples,
+    int sampleRate, {
+    WaveType waveType = WaveType.sine,
+  }) {
     final pcmData = ByteData(numSamples * 2);
 
     for (int i = 0; i < numSamples; i++) {

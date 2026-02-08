@@ -1,0 +1,11 @@
+face1,face2,face3,frontHint,labels
+Hello,Bonjour,Hola,Greeting - English/French/Spanish,language greetings
+Goodbye,Au revoir,Adiós,Farewell,language greetings
+Thank you,Merci,Gracias,Gratitude,language polite
+Please,S'il vous plaît,Por favor,Polite request,language polite
+Yes,Oui,Sí,Affirmative,language basic
+No,Non,No,Negative,language basic
+Good morning,Bon matin,Buenos días,Morning greeting,language greetings
+Good night,Bonne nuit,Buenas noches,Evening farewell,language greetings
+Sorry,Désolé,Lo siento,Apology,language polite
+Excuse me,Excusez-moi,Perdón,Getting attention,language polite

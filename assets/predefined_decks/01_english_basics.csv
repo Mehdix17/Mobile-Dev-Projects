@@ -1,0 +1,21 @@
+front,back,frontHint,backHint,labels
+Hello,A greeting used when meeting someone,Basic greeting,Say it with a smile,english greetings basic
+Thank you,Expression of gratitude,Polite phrase,Shows appreciation,english polite basic
+Please,Used when making a request,Polite word,Magic word,english polite basic
+Sorry,Apology or expression of regret,Say when wrong,Shows you care,english polite basic
+Goodbye,Farewell greeting,Leaving phrase,See you later,english greetings basic
+Yes,Affirmative response,Agreement,Positive answer,english basic
+No,Negative response,Disagreement,Negative answer,english basic
+Excuse me,Used to get attention or apologize,Polite interruption,Pardon,english polite basic
+Good morning,Morning greeting,Before noon,Start the day,english greetings
+Good night,Evening farewell,Before bed,End the day,english greetings
+How are you?,Common greeting question,Check on someone,Conversation starter,english conversation
+Fine,Standard response to 'How are you?',Common answer,I'm okay,english conversation
+I'm sorry,More sincere apology,Deep regret,Heartfelt,english polite
+You're welcome,Response to 'thank you',Polite reply,My pleasure,english polite
+Nice to meet you,Greeting when first meeting,Introduction phrase,Pleased to meet,english greetings social
+See you later,Informal goodbye,Casual farewell,Talk soon,english greetings casual
+Have a nice day,Well-wishing phrase,Friendly goodbye,Good wishes,english polite social
+What's your name?,Question to learn someone's identity,Getting to know,Introduction,english conversation social
+My name is...,Response to name question,Self-introduction,Tell who you are,english conversation social
+Where are you from?,Question about origin,Learn background,Birthplace,english conversation social

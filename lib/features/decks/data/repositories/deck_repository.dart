@@ -72,6 +72,40 @@ class DeckRepository {
     await _decksCollection.doc(id).delete();
   }
 
+  Future<void> toggleStarred(String deckId, bool isStarred) async {
+    await _decksCollection.doc(deckId).update({
+      'isStarred': isStarred,
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
+    });
+  }
+
+  Future<void> publishDeck(String deckId, bool isPublished) async {
+    await _decksCollection.doc(deckId).update({
+      'isPublished': isPublished,
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
+    });
+  }
+
+  Future<List<DeckModel>> getStarredDecks() async {
+    final snapshot = await _decksCollection
+        .where('isStarred', isEqualTo: true)
+        .orderBy('updatedAt', descending: true)
+        .get();
+    return snapshot.docs
+        .map((doc) => DeckModel.fromJson(doc.data(), doc.id))
+        .toList();
+  }
+
+  Future<List<DeckModel>> getPublishedDecks() async {
+    final snapshot = await _decksCollection
+        .where('isPublished', isEqualTo: true)
+        .orderBy('updatedAt', descending: true)
+        .get();
+    return snapshot.docs
+        .map((doc) => DeckModel.fromJson(doc.data(), doc.id))
+        .toList();
+  }
+
   Future<int> getDeckCount() async {
     final snapshot = await _decksCollection.count().get();
     return snapshot.count ?? 0;

@@ -82,6 +82,43 @@ class AppTheme {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: _lightSurface,
+        indicatorColor: _primaryColor.withValues(alpha: 0.15),
+        elevation: 8,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: _primaryColor,
+            );
+          }
+          return const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(
+              color: _primaryColor,
+              size: 24,
+            );
+          }
+          if (states.contains(WidgetState.hovered)) {
+            return const IconThemeData(
+              color: _primaryColor,
+              size: 24,
+            );
+          }
+          return const IconThemeData(
+            color: Colors.grey,
+            size: 24,
+          );
+        }),
+      ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         type: BottomNavigationBarType.fixed,
         backgroundColor: _lightSurface,
@@ -157,6 +194,43 @@ class AppTheme {
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: _darkSurface,
+        indicatorColor: _primaryColor.withValues(alpha: 0.15),
+        elevation: 8,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: _primaryColor,
+            );
+          }
+          return const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(
+              color: _primaryColor,
+              size: 24,
+            );
+          }
+          if (states.contains(WidgetState.hovered)) {
+            return const IconThemeData(
+              color: _primaryColor,
+              size: 24,
+            );
+          }
+          return const IconThemeData(
+            color: Colors.grey,
+            size: 24,
+          );
+        }),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         type: BottomNavigationBarType.fixed,

@@ -1,0 +1,21 @@
+front,back,frontHint,backHint,labels
+What is a variable?,A container that stores data,Programming basics,Can change value,programming basics concept
+What is a function?,Reusable block of code that performs a task,Code organization,Can take parameters,programming basics concept
+What is a loop?,Control structure that repeats code,Iteration,For while repeat,programming basics control
+What is an if statement?,Conditional that executes code based on condition,Decision making,True or false,programming basics control
+What is an array?,Ordered collection of elements,Data structure,Indexed list,programming basics data
+What is a string?,Sequence of characters,Text data,Words and letters,programming basics data
+What is an integer?,Whole number without decimals,Number type,1 2 3,programming basics data
+What is a boolean?,Data type with only true or false,Binary choice,Yes or no,programming basics data
+What is a comment?,Non-executable text in code,Documentation,Ignored by computer,programming basics documentation
+What is debugging?,Process of finding and fixing errors,Problem solving,Remove bugs,programming development
+What does API stand for?,Application Programming Interface,Communication,Software talks to software,programming web concept
+What is HTML?,HyperText Markup Language,Web structure,Website skeleton,programming web language
+What is CSS?,Cascading Style Sheets,Web styling,Makes sites pretty,programming web language
+What is a database?,Organized collection of data,Storage system,Saves information,programming database concept
+What is Git?,Version control system,Track changes,Saves code history,programming tools version
+What is a repository?,Storage location for code,Project folder,Code home,programming tools git
+What is syntax?,Rules for writing code,Grammar,Must be correct,programming basics concept
+What is an algorithm?,Step-by-step procedure to solve problem,Logic,Recipe for computer,programming concept
+What is recursion?,Function that calls itself,Advanced technique,Needs base case,programming advanced concept
+What is a class?,Blueprint for creating objects,Object-oriented,Template,programming oop concept

@@ -87,6 +87,26 @@ class DeckNotifier extends StateNotifier<AsyncValue<List<DeckModel>>> {
       rethrow;
     }
   }
+
+  Future<void> toggleStarred(String deckId, bool isStarred) async {
+    try {
+      await _repository.toggleStarred(deckId, isStarred);
+      await loadDecks();
+      _ref.invalidate(deckProvider(deckId));
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> publishDeck(String deckId, bool isPublished) async {
+    try {
+      await _repository.publishDeck(deckId, isPublished);
+      await loadDecks();
+      _ref.invalidate(deckProvider(deckId));
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
 
 final deckListProvider =

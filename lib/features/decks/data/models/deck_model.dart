@@ -37,6 +37,8 @@ class DeckModel {
   final int dailyNewCardLimit;
   final int dailyReviewLimit;
   final bool shuffleCards;
+  final bool isStarred;
+  final bool isPublished;
 
   DeckModel({
     required this.id,
@@ -57,6 +59,8 @@ class DeckModel {
     this.dailyNewCardLimit = 20,
     this.dailyReviewLimit = 100,
     this.shuffleCards = true,
+    this.isStarred = false,
+    this.isPublished = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -80,6 +84,8 @@ class DeckModel {
       'dailyNewCardLimit': dailyNewCardLimit,
       'dailyReviewLimit': dailyReviewLimit,
       'shuffleCards': shuffleCards,
+      'isStarred': isStarred,
+      'isPublished': isPublished,
     };
   }
 
@@ -106,6 +112,8 @@ class DeckModel {
       dailyNewCardLimit: json['dailyNewCardLimit'] as int? ?? 20,
       dailyReviewLimit: json['dailyReviewLimit'] as int? ?? 100,
       shuffleCards: json['shuffleCards'] as bool? ?? true,
+      isStarred: json['isStarred'] as bool? ?? false,
+      isPublished: json['isPublished'] as bool? ?? false,
     );
   }
 
@@ -154,6 +162,8 @@ class DeckModel {
     int? dailyNewCardLimit,
     int? dailyReviewLimit,
     bool? shuffleCards,
+    bool? isStarred,
+    bool? isPublished,
   }) {
     return DeckModel(
       id: id ?? this.id,
@@ -174,6 +184,8 @@ class DeckModel {
       dailyNewCardLimit: dailyNewCardLimit ?? this.dailyNewCardLimit,
       dailyReviewLimit: dailyReviewLimit ?? this.dailyReviewLimit,
       shuffleCards: shuffleCards ?? this.shuffleCards,
+      isStarred: isStarred ?? this.isStarred,
+      isPublished: isPublished ?? this.isPublished,
     );
   }
 }

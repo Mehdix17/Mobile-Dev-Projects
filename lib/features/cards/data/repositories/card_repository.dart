@@ -97,6 +97,45 @@ class CardRepository {
     return snapshot.count ?? 0;
   }
 
+  /// Get all cards across all decks for the user
+  Future<List<CardModel>> getAllUserCards() async {
+    final decksSnapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('decks')
+        .get();
+
+    final List<CardModel> allCards = [];
+
+    for (var deckDoc in decksSnapshot.docs) {
+      final cardsSnapshot = await _cardsCollection(deckDoc.id).get();
+      final cards = cardsSnapshot.docs
+          .map((doc) => CardModel.fromJson(doc.data(), doc.id))
+          .toList();
+      allCards.addAll(cards);
+    }
+
+    return allCards;
+  }
+
+  /// Get card counts by status across all decks
+  Future<Map<CardStatus, int>> getCardCountsByStatus() async {
+    final allCards = await getAllUserCards();
+
+    final counts = <CardStatus, int>{
+      CardStatus.newCard: 0,
+      CardStatus.learning: 0,
+      CardStatus.review: 0,
+      CardStatus.mastered: 0,
+    };
+
+    for (var card in allCards) {
+      counts[card.status] = (counts[card.status] ?? 0) + 1;
+    }
+
+    return counts;
+  }
+
   Stream<List<CardModel>> watchCards(String deckId) {
     return _cardsCollection(deckId).snapshots().map(
           (snapshot) => snapshot.docs

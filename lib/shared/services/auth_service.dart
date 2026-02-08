@@ -26,12 +26,12 @@ class AuthService {
   Future<UserCredential> signInAnonymously() async {
     try {
       final credential = await _auth.signInAnonymously();
-      
+
       // Create user document for anonymous user
       if (credential.user != null) {
         await _createUserDocument(credential.user!);
       }
-      
+
       return credential;
     } catch (e) {
       throw _handleAuthException(e);
@@ -128,7 +128,7 @@ class AuthService {
   }) async {
     try {
       final currentUser = _auth.currentUser;
-      
+
       // If user is anonymous, link the account
       if (currentUser != null && currentUser.isAnonymous) {
         // Create email credential
@@ -151,6 +151,9 @@ class AuthService {
         // Update user document
         await _updateUserDocument(userCredential.user!);
 
+        // Reload user to update auth state
+        await userCredential.user?.reload();
+
         return userCredential;
       } else {
         // If not anonymous, create a new account
@@ -170,7 +173,7 @@ class AuthService {
   Future<UserCredential> linkAnonymousToGoogle() async {
     try {
       final currentUser = _auth.currentUser;
-      
+
       // Trigger Google sign in
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
@@ -194,16 +197,19 @@ class AuthService {
         // Update user document
         await _updateUserDocument(userCredential.user!);
 
+        // Reload user to update auth state
+        await userCredential.user?.reload();
+
         return userCredential;
       } else {
         // If not anonymous, just sign in with Google
         final userCredential = await _auth.signInWithCredential(credential);
-        
+
         // Create user document if new user
         if (userCredential.additionalUserInfo?.isNewUser ?? false) {
           await _createUserDocument(userCredential.user!);
         }
-        
+
         return userCredential;
       }
     } catch (e) {
@@ -273,25 +279,31 @@ class AuthService {
 
   // Create user document in Firestore
   Future<void> _createUserDocument(User user) async {
-    await _firestore.collection('users').doc(user.uid).set({
-      'email': user.email,
-      'displayName': user.displayName,
-      'photoURL': user.photoURL,
-      'createdAt': FieldValue.serverTimestamp(),
-      'lastSignInAt': FieldValue.serverTimestamp(),
-      'isAnonymous': user.isAnonymous,
-    }, SetOptions(merge: true),);
+    await _firestore.collection('users').doc(user.uid).set(
+      {
+        'email': user.email,
+        'displayName': user.displayName,
+        'photoURL': user.photoURL,
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastSignInAt': FieldValue.serverTimestamp(),
+        'isAnonymous': user.isAnonymous,
+      },
+      SetOptions(merge: true),
+    );
   }
 
   // Update user document
   Future<void> _updateUserDocument(User user) async {
-    await _firestore.collection('users').doc(user.uid).set({
-      'email': user.email,
-      'displayName': user.displayName,
-      'photoURL': user.photoURL,
-      'lastSignInAt': FieldValue.serverTimestamp(),
-      'isAnonymous': user.isAnonymous,
-    }, SetOptions(merge: true),);
+    await _firestore.collection('users').doc(user.uid).set(
+      {
+        'email': user.email,
+        'displayName': user.displayName,
+        'photoURL': user.photoURL,
+        'lastSignInAt': FieldValue.serverTimestamp(),
+        'isAnonymous': user.isAnonymous,
+      },
+      SetOptions(merge: true),
+    );
   }
 
   // Delete user data from Firestore

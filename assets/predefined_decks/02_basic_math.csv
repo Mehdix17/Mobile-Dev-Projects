@@ -1,0 +1,21 @@
+question,answer,frontHint,backHint,labels
+What is 5 + 3?,8,Addition,Single digit,math addition basic
+What is 10 - 4?,6,Subtraction,Less than 10,math subtraction basic
+What is 7 × 6?,42,Multiplication,Times table,math multiplication
+What is 20 ÷ 4?,5,Division,Equal groups,math division
+What is 12 + 8?,20,Addition,Two digits,math addition
+What is 50 - 15?,35,Subtraction,Tens,math subtraction
+What is 9 × 9?,81,Multiplication,Perfect square,math multiplication
+What is 100 ÷ 10?,10,Division,Easy division,math division
+What is half of 24?,12,Division/Fraction,50%,math fraction
+What is double 15?,30,Multiplication,× 2,math multiplication
+What is 3 + 4 + 5?,12,Addition,Three numbers,math addition
+What is 25 - 10 - 5?,10,Subtraction,Two steps,math subtraction
+What is 5 × 10?,50,Multiplication,Times 10,math multiplication
+What is 36 ÷ 6?,6,Division,Six groups,math division
+What is 1/2 + 1/2?,1,Fractions,Two halves,math fraction
+What is 2² (2 squared)?,4,Exponent,2 × 2,math exponent
+What is 10%,of 100?,10,Percentage,One tenth,math percentage
+What is 3 × (2 + 1)?,9,Order of operations,Parentheses first,math order
+What is the perimeter of a square with side 4?,16,Geometry,4 × side,math geometry
+What is the area of a rectangle 3 × 4?,12,Geometry,Length × width,math geometry area

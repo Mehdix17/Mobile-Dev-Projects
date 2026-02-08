@@ -57,7 +57,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final statsAsync = ref.watch(statisticsProvider);
+    final statsAsync = ref.watch(statisticsNotifierProvider);
     final recentDecksAsync = ref.watch(recentDecksProvider);
     final streakAsync = ref.watch(studyStreakProvider);
 
@@ -99,7 +99,7 @@ class HomeScreen extends ConsumerWidget {
         ),
         body: RefreshIndicator(
           onRefresh: () async {
-            ref.invalidate(statisticsProvider);
+            ref.invalidate(statisticsNotifierProvider);
             ref.invalidate(recentDecksProvider);
             ref.invalidate(studyStreakProvider);
             ref.invalidate(decksProvider);

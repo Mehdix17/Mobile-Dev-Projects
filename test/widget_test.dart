@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:english_flashcard_app/app.dart';
+import 'package:cardly/app.dart';
 
 void main() {
   testWidgets('App loads successfully', (WidgetTester tester) async {

@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
-import 'package:english_flashcard_app/features/study/data/models/study_session_model.dart';
-import 'package:english_flashcard_app/features/cards/data/models/card_model_firestore.dart';
+import 'package:cardly/features/study/data/models/study_session_model.dart';
+import 'package:cardly/features/cards/data/models/card_model_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
