@@ -6,8 +6,6 @@ exclude:
   - test/
   - docs/
   - assets/
-  - CLAUDE.md
-  - README.md
   - "*.dart"
   - "*.md"
   - "*.csv"
