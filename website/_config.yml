@@ -1,0 +1,25 @@
+# Disable Jekyll - use static site only
+exclude:
+  - .git
+  - .github
+  - lib/
+  - test/
+  - docs/
+  - assets/
+  - CLAUDE.md
+  - README.md
+  - "*.dart"
+  - "*.md"
+  - "*.csv"
+  - "*.yml"
+  - "*.env"
+  - "*.json"
+  - ".gitignore"
+  - ".dart_tool/"
+  - "build/"
+  - "ios/"
+  - "android/"
+  - "windows/"
+  - "linux/"
+  - "macos/"
+  - "web/"
