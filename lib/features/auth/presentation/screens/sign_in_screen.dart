@@ -66,7 +66,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
         try {
           // Try to link anonymous account to Google
           await authService.linkAnonymousToGoogle();
-          
+
           if (mounted) {
             context.pop();
             ScaffoldMessenger.of(context).showSnackBar(
@@ -78,11 +78,12 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           if (e.toString().contains('credential-already-in-use') ||
               e.toString().contains('already associated')) {
             await authService.signInWithGoogle();
-            
+
             if (mounted) {
               context.pop();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Signed in with existing account!')),
+                const SnackBar(
+                    content: Text('Signed in with existing account!'),),
               );
             }
           } else {
@@ -92,7 +93,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       } else {
         // Regular Google sign in
         await authService.signInWithGoogle();
-        
+
         if (mounted) {
           context.pop();
           ScaffoldMessenger.of(context).showSnackBar(
@@ -281,11 +282,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   width: double.infinity,
                   child: SignInButton(
                     Buttons.Google,
-                    text: isAnonymous ? 'Continue with Google' : 'Sign in with Google',
+                    text: isAnonymous
+                        ? 'Continue with Google'
+                        : 'Sign in with Google',
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     onPressed: _isLoading ? null : _signInWithGoogle,
                   ),
                 ),

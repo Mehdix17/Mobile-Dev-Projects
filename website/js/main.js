@@ -6,6 +6,17 @@ if (mobileMenuToggle) {
   mobileMenuToggle.addEventListener("click", () => {
     navMenu.classList.toggle("active");
     mobileMenuToggle.classList.toggle("active");
+    // Toggle menu icon animation
+    const spans = mobileMenuToggle.querySelectorAll("span");
+    if (navMenu.classList.contains("active")) {
+      spans[0].style.transform = "rotate(45deg) translate(5px, 5px)";
+      spans[1].style.opacity = "0";
+      spans[2].style.transform = "rotate(-45deg) translate(5px, -5px)";
+    } else {
+      spans[0].style.transform = "none";
+      spans[1].style.opacity = "1";
+      spans[2].style.transform = "none";
+    }
   });
 
   // Close menu when clicking outside
@@ -13,6 +24,10 @@ if (mobileMenuToggle) {
     if (!e.target.closest(".navbar")) {
       navMenu.classList.remove("active");
       mobileMenuToggle.classList.remove("active");
+      const spans = mobileMenuToggle.querySelectorAll("span");
+      spans[0].style.transform = "none";
+      spans[1].style.opacity = "1";
+      spans[2].style.transform = "none";
     }
   });
 
@@ -21,12 +36,16 @@ if (mobileMenuToggle) {
     link.addEventListener("click", () => {
       navMenu.classList.remove("active");
       mobileMenuToggle.classList.remove("active");
+      const spans = mobileMenuToggle.querySelectorAll("span");
+      spans[0].style.transform = "none";
+      spans[1].style.opacity = "1";
+      spans[2].style.transform = "none";
     });
   });
 }
 
 // Smooth scroll with offset for fixed navbar
-document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+document.querySelectorAll('a[data-scroll]').forEach((anchor) => {
   anchor.addEventListener("click", function (e) {
     const href = this.getAttribute("href");
     if (href === "#") return;
@@ -41,6 +60,26 @@ document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
         top: targetPosition,
         behavior: "smooth",
       });
+    }
+  });
+});
+
+// Highlight active navigation link on scroll
+const sections = document.querySelectorAll("section");
+const navLinks = document.querySelectorAll("a[data-scroll]");
+
+window.addEventListener("scroll", () => {
+  const scrollPosition = window.pageYOffset + 80;
+
+  sections.forEach((section) => {
+    const sectionTop = section.offsetTop;
+    const sectionHeight = section.offsetHeight;
+    const sectionId = section.getAttribute("id");
+    const link = document.querySelector(`a[data-scroll[href="#${sectionId}"]]`) || document.querySelector(`a[href="#${sectionId}"]`);
+
+    if (link && scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+      navLinks.forEach((navLink) => navLink.classList.remove("active-link"));
+      link.classList.add("active-link");
     }
   });
 });

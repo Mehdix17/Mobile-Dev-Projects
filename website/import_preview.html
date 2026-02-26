@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Import Screen Preview</title>
+    <style>
+      :root {
+        --bg: #f6f7fb;
+        --card: #fff;
+        --muted: #6b7280;
+        --accent: #0f1724;
+        --error: #dc2626;
+      }
+      body {
+        font-family: Inter, Roboto, Arial, sans-serif;
+        background: var(--bg);
+        margin: 0;
+        color: #0f1724;
+      }
+      .app {
+        max-width: 420px;
+        margin: 16px auto;
+        padding-bottom: 96px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      header h1 {
+        font-size: 20px;
+        margin: 0;
+      }
+      .lead {
+        font-size: 14px;
+        color: var(--muted);
+        margin: 12px 0;
+      }
+      .card {
+        background: var(--card);
+        border-radius: 14px;
+        padding: 16px;
+        box-shadow: 0 6px 18px rgba(12, 14, 24, 0.06);
+      }
+      .card h3 {
+        margin: 0 0 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .section-title {
+        font-weight: 600;
+        margin: 8px 0;
+      }
+      pre {
+        background: transparent;
+        border-radius: 6px;
+        padding: 6px 8px;
+        color: #102a43;
+        margin: 6px 0;
+        font-family: SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+        white-space: pre-wrap;
+      }
+      .examples {
+        background: rgba(15, 23, 36, 0.03);
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 13px;
+      }
+      .notes {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 10px;
+      }
+      .status {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 8px;
+        background: #f8fafc;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .import-bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: transparent;
+        padding: 12px;
+        display: flex;
+        justify-content: center;
+      }
+      .btn {
+        background: #0b5cff;
+        color: #fff;
+        padding: 12px 18px;
+        border-radius: 12px;
+        font-weight: 600;
+        border: none;
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        box-shadow: 0 6px 16px rgba(11, 92, 255, 0.18);
+        cursor: pointer;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      @media (max-height: 700px) {
+        body {
+          font-size: 13px;
+        }
+        .app {
+          margin: 8px auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <button
+          onclick="history.back()"
+          style="border: none; background: transparent; font-size: 20px"
+        >
+          ←
+        </button>
+        <h1>Import Cards</h1>
+      </header>
+
+      <h2 style="font-size: 24px; margin: 10px 0 0">
+        Import flashcards — CSV only
+      </h2>
+      <p class="lead">
+        Upload a CSV to create a new deck. Headers auto-detected; hints
+        supported. Images are NOT supported.
+      </p>
+
+      <div class="card" style="margin-top: 10px">
+        <h3>❓ CSV Format Guide</h3>
+
+        <div class="section-title">Supported card types</div>
+        <div style="display: flex; gap: 12px; align-items: flex-start">
+          <div style="font-size: 18px">✏️</div>
+          <div style="flex: 1">
+            <div style="font-weight: 600">Basic</div>
+            <pre>
+front,back
+front,back,frontHint,backHint</pre
+            >
+          </div>
+        </div>
+
+        <div style="height: 8px"></div>
+        <div style="display: flex; gap: 12px; align-items: flex-start">
+          <div style="font-size: 18px">🔺</div>
+          <div style="flex: 1">
+            <div style="font-weight: 600">Triple</div>
+            <pre>
+face1,face2,face3
+face1,face2,face3,frontHint</pre
+            >
+          </div>
+        </div>
+
+        <div style="height: 10px"></div>
+        <div class="section-title">Examples</div>
+        <div class="examples">
+          <pre>
+Header + row (Basic with hints):
+front,back,frontHint,backHint
+Bonjour,Hello,formal greeting,typical response
+
+Row-only (Basic):
+Hello,Bonjour
+
+Triple example:
+face1,face2,face3
+term,definition,example sentence
+
+Fields with commas:
+"New York, NY","New York City"</pre
+          >
+        </div>
+
+        <div class="notes">
+          Headers auto-detected · Hints optional · Images NOT supported · Use
+          quotes for text with commas
+        </div>
+      </div>
+
+      <div class="status muted">
+        • Everything above fits on a typical phone screen — Import button is
+        fixed to the bottom.
+      </div>
+    </div>
+
+    <div class="import-bar">
+      <button class="btn">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 3v10"
+            stroke="white"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M8 7l4-4 4 4"
+            stroke="white"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+            stroke="white"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        Import
+      </button>
+    </div>
+  </body>
+</html>

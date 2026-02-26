@@ -82,8 +82,14 @@ class DeckNotifier extends StateNotifier<AsyncValue<List<DeckModel>>> {
   Future<void> deleteDeck(String deckId) async {
     try {
       await _repository.deleteDeck(deckId);
-      await loadDecks();
+      // Optimistic local removal
+      state.whenData((decks) {
+        state = AsyncValue.data(
+          decks.where((d) => d.id != deckId).toList(),
+        );
+      });
     } catch (e) {
+      await loadDecks(); // fallback
       rethrow;
     }
   }
@@ -91,9 +97,17 @@ class DeckNotifier extends StateNotifier<AsyncValue<List<DeckModel>>> {
   Future<void> toggleStarred(String deckId, bool isStarred) async {
     try {
       await _repository.toggleStarred(deckId, isStarred);
-      await loadDecks();
+      // Optimistic local update
+      state.whenData((decks) {
+        state = AsyncValue.data(
+          decks
+              .map((d) => d.id == deckId ? d.copyWith(isStarred: isStarred) : d)
+              .toList(),
+        );
+      });
       _ref.invalidate(deckProvider(deckId));
     } catch (e) {
+      await loadDecks();
       rethrow;
     }
   }
@@ -101,11 +115,72 @@ class DeckNotifier extends StateNotifier<AsyncValue<List<DeckModel>>> {
   Future<void> publishDeck(String deckId, bool isPublished) async {
     try {
       await _repository.publishDeck(deckId, isPublished);
-      await loadDecks();
+      // Optimistic local update
+      state.whenData((decks) {
+        state = AsyncValue.data(
+          decks
+              .map(
+                (d) =>
+                    d.id == deckId ? d.copyWith(isPublished: isPublished) : d,
+              )
+              .toList(),
+        );
+      });
       _ref.invalidate(deckProvider(deckId));
     } catch (e) {
+      await loadDecks();
       rethrow;
     }
+  }
+
+  /// Bulk toggle star without reloading after each one
+  Future<void> bulkToggleStar(List<String> deckIds, List<bool> values) async {
+    for (var i = 0; i < deckIds.length; i++) {
+      await _repository.toggleStarred(deckIds[i], values[i]);
+    }
+    // Single local state update
+    state.whenData((decks) {
+      final idToValue = Map.fromIterables(deckIds, values);
+      state = AsyncValue.data(
+        decks
+            .map(
+              (d) => idToValue.containsKey(d.id)
+                  ? d.copyWith(isStarred: idToValue[d.id]!)
+                  : d,
+            )
+            .toList(),
+      );
+    });
+  }
+
+  /// Bulk publish without reloading after each one
+  Future<void> bulkPublish(List<String> deckIds) async {
+    for (final id in deckIds) {
+      await _repository.publishDeck(id, true);
+    }
+    state.whenData((decks) {
+      final idSet = deckIds.toSet();
+      state = AsyncValue.data(
+        decks
+            .map(
+              (d) => idSet.contains(d.id) ? d.copyWith(isPublished: true) : d,
+            )
+            .toList(),
+      );
+    });
+  }
+
+  /// Bulk delete without reloading after each one
+  Future<void> bulkDelete(List<String> deckIds) async {
+    for (final id in deckIds) {
+      await _repository.deleteDeck(id);
+    }
+    state.whenData((decks) {
+      final idSet = deckIds.toSet();
+      state = AsyncValue.data(
+        decks.where((d) => !idSet.contains(d.id)).toList(),
+      );
+    });
   }
 }
 

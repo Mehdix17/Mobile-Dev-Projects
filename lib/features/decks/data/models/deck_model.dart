@@ -40,6 +40,20 @@ class DeckModel {
   final bool isStarred;
   final bool isPublished;
 
+  // Language metadata
+  final String? frontLanguageCode;
+  final String? frontLanguageName;
+  final String? backLanguageCode;
+  final String? backLanguageName;
+
+  // Deck provenance & classification
+  final String? sourceId; // ID of the original deck this was imported from
+  final String? category; // e.g. 'language', 'science', 'trivia'
+  final String? difficulty; // e.g. 'beginner', 'intermediate', 'advanced'
+  final String? authorId;
+  final String? authorName;
+  final bool isPredefined; // display-only label for predefined templates
+
   DeckModel({
     required this.id,
     required this.name,
@@ -61,6 +75,16 @@ class DeckModel {
     this.shuffleCards = true,
     this.isStarred = false,
     this.isPublished = false,
+    this.frontLanguageCode,
+    this.frontLanguageName,
+    this.backLanguageCode,
+    this.backLanguageName,
+    this.sourceId,
+    this.category,
+    this.difficulty,
+    this.authorId,
+    this.authorName,
+    this.isPredefined = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -86,6 +110,16 @@ class DeckModel {
       'shuffleCards': shuffleCards,
       'isStarred': isStarred,
       'isPublished': isPublished,
+      'frontLanguageCode': frontLanguageCode,
+      'frontLanguageName': frontLanguageName,
+      'backLanguageCode': backLanguageCode,
+      'backLanguageName': backLanguageName,
+      'sourceId': sourceId,
+      'category': category,
+      'difficulty': difficulty,
+      'authorId': authorId,
+      'authorName': authorName,
+      'isPredefined': isPredefined,
     };
   }
 
@@ -114,6 +148,16 @@ class DeckModel {
       shuffleCards: json['shuffleCards'] as bool? ?? true,
       isStarred: json['isStarred'] as bool? ?? false,
       isPublished: json['isPublished'] as bool? ?? false,
+      frontLanguageCode: json['frontLanguageCode'] as String?,
+      frontLanguageName: json['frontLanguageName'] as String?,
+      backLanguageCode: json['backLanguageCode'] as String?,
+      backLanguageName: json['backLanguageName'] as String?,
+      sourceId: json['sourceId'] as String?,
+      category: json['category'] as String?,
+      difficulty: json['difficulty'] as String?,
+      authorId: json['authorId'] as String?,
+      authorName: json['authorName'] as String?,
+      isPredefined: json['isPredefined'] as bool? ?? false,
     );
   }
 
@@ -126,6 +170,16 @@ class DeckModel {
     String icon = '📚',
     String? frontEmoji,
     String? backEmoji,
+    String? frontLanguageCode,
+    String? frontLanguageName,
+    String? backLanguageCode,
+    String? backLanguageName,
+    String? sourceId,
+    String? category,
+    String? difficulty,
+    String? authorId,
+    String? authorName,
+    bool isPredefined = false,
   }) {
     final now = DateTime.now();
     return DeckModel(
@@ -140,6 +194,16 @@ class DeckModel {
       backEmoji: backEmoji,
       createdAt: now,
       updatedAt: now,
+      frontLanguageCode: frontLanguageCode,
+      frontLanguageName: frontLanguageName,
+      backLanguageCode: backLanguageCode,
+      backLanguageName: backLanguageName,
+      sourceId: sourceId,
+      category: category,
+      difficulty: difficulty,
+      authorId: authorId,
+      authorName: authorName,
+      isPredefined: isPredefined,
     );
   }
 
@@ -164,6 +228,16 @@ class DeckModel {
     bool? shuffleCards,
     bool? isStarred,
     bool? isPublished,
+    String? frontLanguageCode,
+    String? frontLanguageName,
+    String? backLanguageCode,
+    String? backLanguageName,
+    String? sourceId,
+    String? category,
+    String? difficulty,
+    String? authorId,
+    String? authorName,
+    bool? isPredefined,
   }) {
     return DeckModel(
       id: id ?? this.id,
@@ -186,6 +260,16 @@ class DeckModel {
       shuffleCards: shuffleCards ?? this.shuffleCards,
       isStarred: isStarred ?? this.isStarred,
       isPublished: isPublished ?? this.isPublished,
+      frontLanguageCode: frontLanguageCode ?? this.frontLanguageCode,
+      frontLanguageName: frontLanguageName ?? this.frontLanguageName,
+      backLanguageCode: backLanguageCode ?? this.backLanguageCode,
+      backLanguageName: backLanguageName ?? this.backLanguageName,
+      sourceId: sourceId ?? this.sourceId,
+      category: category ?? this.category,
+      difficulty: difficulty ?? this.difficulty,
+      authorId: authorId ?? this.authorId,
+      authorName: authorName ?? this.authorName,
+      isPredefined: isPredefined ?? this.isPredefined,
     );
   }
 }

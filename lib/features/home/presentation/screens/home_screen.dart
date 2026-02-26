@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -32,28 +31,6 @@ final _predefinedDecksInitProvider = FutureProvider<bool>((ref) async {
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  Future<bool> _showExitConfirmation(BuildContext context) async {
-    final shouldExit = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Exit App'),
-        content: const Text('Are you sure you want to exit the application?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Exit'),
-          ),
-        ],
-      ),
-    );
-
-    return shouldExit == true;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -75,81 +52,70 @@ class HomeScreen extends ConsumerWidget {
       }
     });
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (!didPop) {
-          final shouldExit = await _showExitConfirmation(context);
-          if (shouldExit) {
-            SystemNavigator.pop();
-          }
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Cardly'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () {
-                // Search functionality will be added in future updates
-              },
-            ),
-          ],
-        ),
-        body: RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(statisticsNotifierProvider);
-            ref.invalidate(recentDecksProvider);
-            ref.invalidate(studyStreakProvider);
-            ref.invalidate(decksProvider);
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Greeting and streak
-                _buildGreeting(context, streakAsync),
-                const SizedBox(height: 24),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Cardly'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              // Search functionality will be added in future updates
+            },
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(statisticsNotifierProvider);
+          ref.invalidate(recentDecksProvider);
+          ref.invalidate(studyStreakProvider);
+          ref.invalidate(decksProvider);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Greeting and streak
+              _buildGreeting(context, streakAsync),
+              const SizedBox(height: 24),
 
-                // Quick stats
-                statsAsync.when(
-                  data: (stats) => QuickStatsCard(stats: stats),
-                  loading: () => const SizedBox(
-                    height: 120,
-                    child: LoadingIndicator(),
-                  ),
-                  error: (e, _) => Text('Error: $e'),
+              // Quick stats
+              statsAsync.when(
+                data: (stats) => QuickStatsCard(stats: stats),
+                loading: () => const SizedBox(
+                  height: 120,
+                  child: LoadingIndicator(),
                 ),
-                const SizedBox(height: 24),
+                error: (e, _) => Text('Error: $e'),
+              ),
+              const SizedBox(height: 24),
 
-                // Daily challenge
-                const DailyChallengeCard(),
-                const SizedBox(height: 24),
+              // Daily challenge
+              const DailyChallengeCard(),
+              const SizedBox(height: 24),
 
-                // Recent decks
-                Text(
-                  'Recent Decks',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              // Recent decks
+              Text(
+                'Recent Decks',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(height: 12),
-                recentDecksAsync.when(
-                  data: (decks) => decks.isEmpty
-                      ? _buildEmptyRecentDecks(context)
-                      : RecentDecksList(decks: decks),
-                  loading: () => const SizedBox(
-                    height: 100,
-                    child: LoadingIndicator(),
-                  ),
-                  error: (e, _) => Text('Error: $e'),
+              ),
+              const SizedBox(height: 12),
+              recentDecksAsync.when(
+                data: (decks) => decks.isEmpty
+                    ? _buildEmptyRecentDecks(context)
+                    : RecentDecksList(decks: decks),
+                loading: () => const SizedBox(
+                  height: 100,
+                  child: LoadingIndicator(),
                 ),
-                const SizedBox(height: 24),
-              ],
-            ),
+                error: (e, _) => Text('Error: $e'),
+              ),
+              const SizedBox(height: 24),
+            ],
           ),
         ),
       ),

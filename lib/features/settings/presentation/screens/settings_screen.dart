@@ -31,6 +31,11 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const Divider(),
 
+          // Account section
+          _buildSectionHeader(theme, 'Account'),
+          _buildAccountSection(context, ref, theme),
+          const Divider(),
+
           // Study settings section
           _buildSectionHeader(theme, 'Study Settings'),
           ListTile(
@@ -105,68 +110,6 @@ class SettingsScreen extends ConsumerWidget {
                 }
               },
             ),
-          const Divider(),
-
-          // Behavior section
-          _buildSectionHeader(theme, 'Behavior'),
-          SwitchListTile(
-            secondary: const Icon(Icons.vibration),
-            title: const Text('Haptic Feedback'),
-            subtitle: const Text('Vibrate on interactions'),
-            value: settings.hapticFeedback,
-            onChanged: (value) {
-              ref.read(settingsProvider.notifier).setHapticFeedback(value);
-            },
-          ),
-          SwitchListTile(
-            secondary: const Icon(Icons.volume_up),
-            title: const Text('Sound Effects'),
-            subtitle: const Text('Play sounds on correct/incorrect'),
-            value: settings.soundEnabled,
-            onChanged: (value) {
-              ref.read(settingsProvider.notifier).setSoundEnabled(value);
-            },
-          ),
-          const Divider(),
-
-          // Account section
-          _buildSectionHeader(theme, 'Account'),
-          _buildAccountSection(context, ref, theme),
-          const Divider(),
-
-          // Data section
-          _buildSectionHeader(theme, 'Data'),
-          ListTile(
-            leading: const Icon(Icons.upload),
-            title: const Text('Export Data'),
-            subtitle: const Text('Export all cards and progress'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Export feature coming soon')),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.download),
-            title: const Text('Import Data'),
-            subtitle: const Text('Import cards from file'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Import feature coming soon')),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.delete_forever, color: AppColors.error),
-            title: const Text(
-              'Reset All Data',
-              style: TextStyle(color: AppColors.error),
-            ),
-            subtitle: const Text('Delete all cards and progress'),
-            onTap: () => _showResetConfirmation(context, ref),
-          ),
           const Divider(),
 
           // About section
@@ -463,38 +406,6 @@ class SettingsScreen extends ConsumerWidget {
             ],
           );
         },
-      ),
-    );
-  }
-
-  void _showResetConfirmation(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Reset All Data?'),
-        content: const Text(
-          'This will permanently delete all your cards, decks, and study progress. This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // Reset data
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('All data has been reset')),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Reset'),
-          ),
-        ],
       ),
     );
   }

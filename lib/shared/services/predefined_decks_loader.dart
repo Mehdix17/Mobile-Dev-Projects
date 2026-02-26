@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:flutter/services.dart';
 import 'package:csv/csv.dart';
@@ -25,63 +26,56 @@ class PredefinedDecksLoader {
         .collection('cards');
   }
 
-  /// Load all predefined decks from assets
+  /// Load manifest.json and return the list of deck metadata
+  Future<List<Map<String, dynamic>>> loadManifest() async {
+    final manifestString = await rootBundle.loadString(
+      'assets/predefined_decks/manifest.json',
+    );
+    final manifest = json.decode(manifestString) as Map<String, dynamic>;
+    return List<Map<String, dynamic>>.from(manifest['decks'] as List);
+  }
+
+  /// Load manifest enriched with card counts from CSV files
+  Future<List<Map<String, dynamic>>> loadManifestWithCardCounts() async {
+    final manifest = await loadManifest();
+    for (final deck in manifest) {
+      try {
+        final filePath = 'assets/predefined_decks/${deck['file']}';
+        final csvString = await rootBundle.loadString(filePath);
+        final lines =
+            csvString.split('\n').where((l) => l.trim().isNotEmpty).length;
+        deck['cardCount'] = lines > 1 ? lines - 1 : 0;
+      } catch (e) {
+        deck['cardCount'] = 0;
+      }
+    }
+    return manifest;
+  }
+
+  /// Load all predefined decks from assets using manifest.json
   Future<List<Map<String, dynamic>>> loadPredefinedDecksData() async {
-    final deckFiles = [
-      {
-        'file': 'assets/predefined_decks/01_english_basics.csv',
-        'name': 'English Basics',
-        'description': 'Common phrases, greetings, and polite expressions',
-        'icon': '🗣️',
-        'color': DeckColor.blue,
-      },
-      {
-        'file': 'assets/predefined_decks/02_basic_math.csv',
-        'name': 'Basic Math',
-        'description': 'Arithmetic, geometry, and math fundamentals',
-        'icon': '🔢',
-        'color': DeckColor.green,
-      },
-      {
-        'file': 'assets/predefined_decks/03_multilingual_basics.csv',
-        'name': 'Multilingual Basics',
-        'description': 'English/French/Spanish basics',
-        'icon': '🌍',
-        'color': DeckColor.purple,
-      },
-      {
-        'file': 'assets/predefined_decks/04_world_geography.csv',
-        'name': 'World Geography',
-        'description': 'Countries, capitals, and landmarks',
-        'icon': '🗺️',
-        'color': DeckColor.orange,
-      },
-      {
-        'file': 'assets/predefined_decks/05_programming_fundamentals.csv',
-        'name': 'Programming Fundamentals',
-        'description': 'Basic programming concepts',
-        'icon': '💻',
-        'color': DeckColor.indigo,
-      },
-      {
-        'file': 'assets/predefined_decks/06_science_vocabulary.csv',
-        'name': 'Science Vocabulary',
-        'description': 'Biology, chemistry, and physics terms',
-        'icon': '🔬',
-        'color': DeckColor.teal,
-      },
-    ];
+    final manifest = await loadManifest();
 
     final List<Map<String, dynamic>> decksData = [];
 
-    for (var deckInfo in deckFiles) {
+    for (var deckInfo in manifest) {
       try {
-        final csvString =
-            await rootBundle.loadString(deckInfo['file'] as String);
+        final filePath = 'assets/predefined_decks/${deckInfo['file']}';
+        final csvString = await rootBundle.loadString(filePath);
         final cards = await _parseCsvToCards(csvString, deckInfo);
 
+        // Resolve DeckColor from string
+        final colorName = deckInfo['color'] as String? ?? 'blue';
+        final deckColor = DeckColor.values.firstWhere(
+          (e) => e.name == colorName,
+          orElse: () => DeckColor.blue,
+        );
+
         decksData.add({
-          'info': deckInfo,
+          'info': {
+            ...deckInfo,
+            'color': deckColor,
+          },
           'cards': cards,
         });
       } catch (e) {
@@ -336,12 +330,22 @@ class PredefinedDecksLoader {
       description: deckInfo['description'] as String,
       color: deckInfo['color'] as DeckColor,
       icon: deckInfo['icon'] as String,
+      frontEmoji: deckInfo['frontFlag'] as String?,
+      backEmoji: deckInfo['backFlag'] as String?,
       createdAt: now,
       updatedAt: now,
       cardCount: cards.length,
       newCardCount: cards.length,
       dueCardCount: cards.length,
       tags: ['predefined'],
+      frontLanguageCode: deckInfo['frontLanguageCode'] as String?,
+      frontLanguageName: deckInfo['frontLanguageName'] as String?,
+      backLanguageCode: deckInfo['backLanguageCode'] as String?,
+      backLanguageName: deckInfo['backLanguageName'] as String?,
+      category: deckInfo['category'] as String?,
+      difficulty: deckInfo['difficulty'] as String?,
+      sourceId: 'predefined:${deckInfo['file']}',
+      isPredefined: true,
     );
 
     await deckRef.set(deck.toJson());

@@ -2,150 +2,163 @@
 
 This folder contains ready-to-use flashcard decks that come pre-installed with Cardly app for all users.
 
-## üìö Available Decks
+## Ì≥ö Available Decks
 
-### 1. English Basics (01_english_basics.csv)
+### 1. English - French (english_french.csv)
 
-**Cards:** 20  
-**Type:** Basic front/back  
-**Topics:** Common phrases, greetings, polite expressions  
-**Labels:** english, greetings, polite, basic, conversation, social, casual  
-**Ideal for:** Beginners learning English, conversation practice
-
----
-
-### 2. Basic Math (02_basic_math.csv)
-
-**Cards:** 20  
-**Type:** Basic Q&A  
-**Topics:** Addition, subtraction, multiplication, division, geometry  
-**Labels:** math, addition, subtraction, multiplication, division, fraction, geometry, percentage  
-**Ideal for:** Elementary/middle school students, math practice
+**Cards:** 787  
+**Type:** Basic front/back with hints  
+**Topics:** Comprehensive English to French vocabulary  
+**Format:** front, back, frontHint, backHint, label  
+**Ideal for:** English speakers learning French, extensive vocabulary building
 
 ---
 
-### 3. Multilingual Basics (03_multilingual_basics.csv)
+### 2. English - Arabic (english_arabic.csv)
 
-**Cards:** 20  
-**Type:** Triple cards (English/French/Spanish)  
-**Topics:** Numbers 1-10, greetings, common words  
-**Labels:** spanish, french, numbers, greetings, polite, basic, food, social  
-**Ideal for:** Learning multiple languages simultaneously
-
----
-
-### 4. World Geography (04_world_geography.csv)
-
-**Cards:** 20  
-**Type:** Basic Q&A  
-**Topics:** Capitals, oceans, rivers, mountains, continents, geography concepts  
-**Labels:** geography, europe, asia, america, africa, capital, ocean, river, mountain, continent  
-**Ideal for:** Students studying world geography, general knowledge
+**Cards:** 778  
+**Type:** Basic front/back with hints  
+**Topics:** Comprehensive English to Arabic vocabulary  
+**Format:** front, back, frontHint, backHint, label  
+**Ideal for:** English speakers learning Arabic, extensive vocabulary building
 
 ---
 
-### 5. Programming Fundamentals (05_programming_fundamentals.csv)
+### 3. English - French - Arabic (english_french_arabic.csv)
 
-**Cards:** 20  
-**Type:** Basic Q&A  
-**Topics:** Variables, functions, loops, data types, web technologies  
-**Labels:** programming, basics, concept, control, data, web, language, tools, development  
-**Ideal for:** Beginner programmers, computer science students
-
----
-
-### 6. Science Vocabulary (06_science_vocabulary.csv)
-
-**Cards:** 20  
-**Type:** Word/Definition  
-**Topics:** Biology, chemistry, physics terms  
-**Labels:** science, biology, chemistry, physics, basic, genetics, environment, classification  
-**Ideal for:** Students learning scientific terminology
+**Cards:** 768  
+**Type:** Trilingual vocabulary cards  
+**Topics:** Core vocabulary in three languages  
+**Format:** front, middle, back, hint, label  
+**Ideal for:** Learning multiple languages simultaneously, polyglots
 
 ---
 
-## üéØ Purpose
+### 4. Arabic - French (arabic_french.csv)
+
+**Cards:** 99  
+**Type:** Basic front/back with hints  
+**Topics:** Arabic to French vocabulary  
+**Format:** front, back, frontHint, backHint, label  
+**Ideal for:** Arabic speakers learning French, bidirectional language learning
+
+---
+
+### 5. English Idioms (idioms.csv)
+
+**Cards:** 160  
+**Type:** Idiom expressions with translations  
+**Topics:** Common English idioms and their meanings  
+**Format:** Varies by content structure  
+**Ideal for:** Advanced English learners, understanding idiomatic expressions
+
+---
+
+## ÌæØ Purpose
 
 These decks are designed to:
 
-- Help new users get started immediately
-- Demonstrate all card types (Basic, Image, Triple)
-- Show best practices for labels and hints
-- Cover popular study topics
-- Provide quality educational content
+- Provide comprehensive vocabulary resources
+- Support multilingual learning
+- Include learning hints to aid memorization
+- Cover practical, everyday vocabulary
+- Enable effective language acquisition
 
 ---
 
-## üîß Technical Notes
+## Ì¥ß Technical Notes
 
 **Format:** CSV with headers  
 **Delimiter:** Comma (,)  
 **Encoding:** UTF-8  
-**Labels:** Space-separated in labels column  
-**All cards include:**
+**Hints:** Masked versions of words to aid learning  
+**Labels:** Part of speech and usage tags  
 
-- Required content fields (front/back, imageUrl/word, face1/face2/face3)
-- Optional hints (frontHint, backHint)
-- Optional labels (can be empty)
+**Common columns:**
+- \`front\`: Primary word/phrase
+- \`back\`: Translation
+- \`frontHint\`: Hint for front word (showing first letters)
+- \`backHint\`: Hint for back word (showing first letters)
+- \`label\`: Part of speech (noun, verb, adjective, etc.)
 
----
-
-## üìù Creating New Predefined Decks
-
-If you want to add new predefined decks:
-
-1. **Follow naming convention:** `NN_descriptive_name.csv`
-2. **Include all columns:** Even if labels are empty, include the column
-3. **Use proper labels:** Space-separated, relevant, searchable
-4. **Quality content:** Educational value, no errors
-5. **20-30 cards:** Good deck size for starting
-6. **Add to this README:** Document your new deck
+**For trilingual cards (english_french_arabic.csv):**
+- \`front\`: English word
+- \`middle\`: French translation
+- \`back\`: Arabic translation
+- \`hint\`: Learning aid
+- \`label\`: Part of speech
 
 ---
 
-## üöÄ Usage
+## Ì≥ù Hint System
+
+The hint system uses a smart masking algorithm:
+- Shows first 1-2 letters of words
+- Preserves spaces and punctuation
+- Helps learners recall without giving away the answer
+- Works with both Latin and Arabic scripts
+
+Example:
+- Word: "beautiful" ‚Üí Hint: "be*******"
+- Word: "ÿ¨ŸÖŸäŸÑ" ‚Üí Hint: "ÿ¨***"
+
+---
+
+## Ì∫Ä Usage
 
 These decks can be:
 
-- **Pre-loaded** into user accounts on first launch
-- **Imported** via the import feature
-- **Cloned** as templates for custom decks
-- **Shared** with other users
+- **Imported** directly into user accounts
+- **Studied** with spaced repetition
+- **Customized** by users after import
+- **Shared** as predefined resources
 
 ---
 
-## üìä Label Categories Used
+## Ìæì Educational Value
 
-**Languages:** english, spanish, french  
-**Subjects:** math, science, geography, programming  
-**Difficulty:** basic, advanced  
-**Topics:** greetings, numbers, food, polite, social, conversation  
-**Skills:** addition, multiplication, biology, chemistry, physics
+Each deck follows learning best practices:
 
----
-
-## üéì Educational Value
-
-Each deck is designed with learning science principles:
-
-- **Spaced Repetition Ready:** Works with SRS algorithms
-- **Progressive Difficulty:** Mix of easy and challenging
-- **Context Clues:** Hints help learning
-- **Real-world Relevance:** Practical, useful knowledge
-- **Clear Learning Goals:** Focused topics
+- **Comprehensive Coverage:** 100-800 cards per deck
+- **Progressive Learning:** Mix of common and advanced vocabulary
+- **Contextual Hints:** Support active recall
+- **Practical Vocabulary:** Real-world usage
+- **Part of Speech Labels:** Clear categorization
 
 ---
 
-## üîÑ Updates
+## Ì¥Ñ Deck Statistics
 
-When updating existing decks:
+| Deck | Card Count | Languages | Type |
+|------|-----------|-----------|------|
+| English - French | 787 | 2 | Bilingual |
+| English - Arabic | 778 | 2 | Bilingual |
+| English - French - Arabic | 768 | 3 | Trilingual |
+| Arabic - French | 99 | 2 | Bilingual |
+| English Idioms | 160 | 1 | Expressions |
 
-- Maintain backward compatibility
-- Keep card count reasonable (20-50)
-- Update this README
-- Test import/export functionality
-- Verify all labels are useful
+**Total Vocabulary Items:** 2,592 unique entries
 
 ---
 
-**Happy Learning! üéì**
+## Ì≥ö Content Categories
+
+**Parts of Speech Covered:**
+- Nouns (common, proper)
+- Verbs (regular, phrasal)
+- Adjectives
+- Adverbs
+- Phrases
+- Idioms
+- Conjunctions
+- Prepositions
+
+**Difficulty Levels:**
+- Basic everyday vocabulary
+- Intermediate expressions
+- Advanced idioms
+- Specialized terminology
+
+---
+
+**Happy Learning! Ìæì**

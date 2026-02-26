@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/router/route_names.dart';
@@ -14,6 +15,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
+  DateTime? _lastBackPress;
 
   static const _destinations = [
     (icon: Icons.home_outlined, selectedIcon: Icons.home, label: 'Home'),
@@ -42,12 +44,32 @@ class _AppShellState extends State<AppShell> {
     final location = GoRouterState.of(context).uri.path;
     final isHome = location == RouteNames.home;
 
-    return PopScope(
-      canPop: isHome, // Only allow pop (exit) when on home screen
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop && !isHome) {
-          // Back gesture on non-home screen -> go to home
+    // ignore: deprecated_member_use
+    return WillPopScope(
+      onWillPop: () async {
+        if (!isHome) {
           context.go(RouteNames.home);
+          return false;
+        }
+
+        // Home tab: double-back to exit
+        final now = DateTime.now();
+        if (_lastBackPress != null &&
+            now.difference(_lastBackPress!) < const Duration(seconds: 2)) {
+          SystemNavigator.pop();
+          return false;
+        } else {
+          _lastBackPress = now;
+          ScaffoldMessenger.of(context)
+            ..clearSnackBars()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text('Press back again to exit'),
+                duration: Duration(seconds: 2),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          return false;
         }
       },
       child: Scaffold(

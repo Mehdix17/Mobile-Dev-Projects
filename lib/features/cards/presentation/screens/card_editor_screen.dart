@@ -34,6 +34,42 @@ class _CardEditorScreenState extends ConsumerState<CardEditorScreen> {
   // Controllers for different field types
   final Map<String, TextEditingController> _controllers = {};
   List<String> _tags = [];
+  final TextEditingController _tagInputController = TextEditingController();
+  String _tagQuery = '';
+
+  void _addTag(String tag) {
+    final t = tag.trim().toLowerCase();
+    if (t.isEmpty) return;
+    if (!_tags.contains(t)) {
+      setState(() => _tags.add(t));
+    }
+    _tagInputController.clear();
+    setState(() => _tagQuery = '');
+  }
+
+  void _addTagFromInput() {
+    final text = _tagInputController.text.trim();
+    if (text.isEmpty) return;
+    _addTag(text);
+  }
+
+  Color _colorForTag(String tag) {
+    final predefined = PredefinedTags.getColorForTag(tag);
+    if (predefined != null) return predefined;
+    final palette = <Color>[
+      const Color(0xFF2196F3),
+      const Color(0xFF4CAF50),
+      const Color(0xFFFF9800),
+      const Color(0xFF9C27B0),
+      const Color(0xFF00BCD4),
+      const Color(0xFFE91E63),
+      const Color(0xFFFF5722),
+      const Color(0xFF3F51B5),
+      const Color(0xFF00BCD4),
+      const Color(0xFFCDDC39),
+    ];
+    return palette[tag.hashCode.abs() % palette.length];
+  }
 
   @override
   void initState() {
@@ -98,6 +134,7 @@ class _CardEditorScreenState extends ConsumerState<CardEditorScreen> {
     for (final controller in _controllers.values) {
       controller.dispose();
     }
+    _tagInputController.dispose();
     super.dispose();
   }
 
@@ -188,42 +225,162 @@ class _CardEditorScreenState extends ConsumerState<CardEditorScreen> {
               ),
             ),
             const SizedBox(height: 8),
+
+            // Selected tags (custom). Predefined tag list hidden for NEW card screen to keep UI minimal.
             Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: PredefinedTags.tags.map((predefinedTag) {
-                final isSelected = _tags.contains(predefinedTag.name);
-                return FilterChip(
-                  label: Text(
-                    predefinedTag.name,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : predefinedTag.color,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                // Custom/selected tags that are NOT part of PredefinedTags
+                ..._tags.where((t) => !PredefinedTags.tagNames.contains(t)).map(
+                      (tag) => InputChip(
+                        label: Text(tag),
+                        onDeleted: () => setState(() => _tags.remove(tag)),
+                        backgroundColor:
+                            theme.colorScheme.surfaceContainerHighest,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
                     ),
-                  ),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      if (selected) {
-                        _tags.add(predefinedTag.name);
-                      } else {
-                        _tags.remove(predefinedTag.name);
-                      }
-                    });
-                  },
-                  backgroundColor: predefinedTag.color.withValues(alpha: 0.1),
-                  selectedColor: predefinedTag.color,
-                  showCheckmark: false,
-                  side: BorderSide(
-                    color: predefinedTag.color,
-                    width: 1.5,
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+
+                // Predefined tags (keep visible only when editing an existing card)
+                if (isEditing)
+                  ...PredefinedTags.tags.map((predefinedTag) {
+                    final isSelected = _tags.contains(predefinedTag.name);
+                    return FilterChip(
+                      label: Text(
+                        predefinedTag.name,
+                        style: TextStyle(
+                          color:
+                              isSelected ? Colors.white : predefinedTag.color,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setState(() {
+                          if (selected) {
+                            _tags.add(predefinedTag.name);
+                          } else {
+                            _tags.remove(predefinedTag.name);
+                          }
+                        });
+                      },
+                      backgroundColor:
+                          predefinedTag.color.withValues(alpha: 0.1),
+                      selectedColor: predefinedTag.color,
+                      showCheckmark: false,
+                      side: BorderSide(
+                        color: predefinedTag.color,
+                        width: 1.5,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    );
+                  }),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
+            // Tag input + suggestions
+            TextField(
+              controller: _tagInputController,
+              decoration: InputDecoration(
+                hintText: 'Add or search tags (press Enter to add)',
+                prefixIcon: const Icon(Icons.label_outline),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () => _addTagFromInput(),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+              onChanged: (v) => setState(() => _tagQuery = v.trim()),
+              onSubmitted: (_) => _addTagFromInput(),
+            ),
+
+            const SizedBox(height: 8),
+
+            // Suggestions (deck-used tags + predefined match)
+            Builder(
+              builder: (ctx) {
+                final cardsAsync = ref.watch(cardListProvider(widget.deckId));
+                final suggestions = <String>{};
+
+                // Add tags found in the deck's cards
+                cardsAsync.whenData((cards) {
+                  for (final c in cards) {
+                    suggestions.addAll(c.tags.map((t) => t.toLowerCase()));
+                  }
+                });
+
+                // Add predefined tag names and include tags added during this session
+                suggestions.addAll(PredefinedTags.tagNames);
+                suggestions.addAll(_tags.map((t) => t.toLowerCase()));
+
+                // Remove already selected tags from suggestions
+                suggestions.removeAll(_tags.map((t) => t.toLowerCase()));
+
+                // Filter by query
+                List<String> filtered;
+                if (_tagQuery.isEmpty) {
+                  filtered = suggestions.toList()..sort();
+                } else {
+                  filtered = suggestions
+                      .where((s) => s.contains(_tagQuery.toLowerCase()))
+                      .toList()
+                    ..sort();
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (filtered.isNotEmpty)
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: filtered.map((s) {
+                          final color = _colorForTag(s);
+                          return ActionChip(
+                            backgroundColor: color.withValues(alpha: 0.12),
+                            label: Text(s, style: TextStyle(color: color)),
+                            onPressed: () {
+                              _addTag(s);
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    // Offer to create new tag when query doesn't match an exact suggestion
+                    if (_tagQuery.isNotEmpty &&
+                        !suggestions.contains(_tagQuery.toLowerCase()))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: GestureDetector(
+                          onTap: () => _addTag(_tagQuery),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.add_circle_outline, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Create "$_tagQuery"',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
                 );
-              }).toList(),
+              },
             ),
           ],
         ),

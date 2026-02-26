@@ -37,7 +37,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     // Check password strength
-    final passwordStrength = PasswordStrengthCalculator.calculateStrength(_passwordController.text);
+    final passwordStrength =
+        PasswordStrengthCalculator.calculateStrength(_passwordController.text);
     if (passwordStrength.strength == PasswordStrength.weak) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -93,11 +94,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
     try {
       final authService = ref.read(authServiceProvider);
-      
+
       try {
         // Try to link anonymous account to Google
         await authService.linkAnonymousToGoogle();
-        
+
         if (mounted) {
           context.pop();
           ScaffoldMessenger.of(context).showSnackBar(
@@ -109,7 +110,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         if (e.toString().contains('credential-already-in-use') ||
             e.toString().contains('already associated')) {
           await authService.signInWithGoogle();
-          
+
           if (mounted) {
             context.pop();
             ScaffoldMessenger.of(context).showSnackBar(
@@ -317,8 +318,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                             : Icons.visibility_off,
                       ),
                       onPressed: () {
-                        setState(() =>
-                            _obscureConfirmPassword = !_obscureConfirmPassword,);
+                        setState(
+                          () => _obscureConfirmPassword =
+                              !_obscureConfirmPassword,
+                        );
                       },
                     ),
                     border: const OutlineInputBorder(),
@@ -372,11 +375,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   width: double.infinity,
                   child: SignInButton(
                     Buttons.Google,
-                    text: isAnonymous ? 'Continue with Google' : 'Sign up with Google',
+                    text: isAnonymous
+                        ? 'Continue with Google'
+                        : 'Sign up with Google',
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     onPressed: _isLoading ? null : _signUpWithGoogle,
                   ),
                 ),

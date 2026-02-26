@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "decks": [
+    {
+      "file": "english_french.csv",
+      "name": "English - French",
+      "description": "Essential English to French vocabulary",
+      "icon": "📕",
+      "frontFlag": "🇬🇧",
+      "backFlag": "🇫🇷",
+      "frontLanguageCode": "en",
+      "frontLanguageName": "English",
+      "backLanguageCode": "fr",
+      "backLanguageName": "French",
+      "category": "language",
+      "difficulty": "beginner"
+    },
+    {
+      "file": "english_arabic.csv",
+      "name": "English - Arabic",
+      "description": "Essential English to Arabic vocabulary",
+      "icon": "🌲",
+      "frontFlag": "🇬🇧",
+      "backFlag": "🇸🇦",
+      "frontLanguageCode": "en",
+      "frontLanguageName": "English",
+      "backLanguageCode": "ar",
+      "backLanguageName": "Arabic",
+      "category": "language",
+      "difficulty": "beginner"
+    },
+    {
+      "file": "english_french_arabic.csv",
+      "name": "English - French - Arabic",
+      "description": "Trilingual vocabulary with hints",
+      "icon": "🌍",
+      "frontFlag": "🇬🇧",
+      "backFlag": "🇫🇷",
+      "thirdFlag": "🇸🇦",
+      "frontLanguageCode": "en",
+      "frontLanguageName": "English",
+      "backLanguageCode": "fr",
+      "backLanguageName": "French",
+      "middleLanguageCode": "fr",
+      "middleLanguageName": "French",
+      "thirdLanguageCode": "ar",
+      "thirdLanguageName": "Arabic",
+      "category": "language",
+      "difficulty": "intermediate"
+    },
+    {
+      "file": "arabic_french.csv",
+      "name": "Arabic - French",
+      "description": "Arabic to French vocabulary",
+      "icon": "📘",
+      "frontFlag": "🇸🇦",
+      "backFlag": "🇫🇷",
+      "frontLanguageCode": "ar",
+      "frontLanguageName": "Arabic",
+      "backLanguageCode": "fr",
+      "backLanguageName": "French",
+      "category": "language",
+      "difficulty": "beginner"
+    },
+    {
+      "file": "idioms.csv",
+      "name": "English Idioms",
+      "description": "Common English idioms and expressions",
+      "icon": "🪄",
+      "frontFlag": "🇬🇧",
+      "backFlag": "🇬🇧",
+      "frontLanguageCode": "en",
+      "frontLanguageName": "English",
+      "backLanguageCode": "en",
+      "backLanguageName": "English",
+      "category": "language",
+      "difficulty": "intermediate"
+    }
+  ]
+}

@@ -140,28 +140,34 @@ class DeckDetailScreen extends ConsumerWidget {
               ),
               // Stats bar
               SliverToBoxAdapter(
-                child: Container(
+                child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      _StatChip(
-                        label: 'Cards',
-                        value: deck.cardCount.toString(),
-                        color: theme.colorScheme.primary,
+                      Expanded(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _StatChip(
+                              label: 'Cards',
+                              value: deck.cardCount.toString(),
+                              color: theme.colorScheme.primary,
+                            ),
+                            _StatChip(
+                              label: 'New',
+                              value: deck.newCardCount.toString(),
+                              color: Colors.blue,
+                            ),
+                            _StatChip(
+                              label: 'Due',
+                              value: deck.dueCardCount.toString(),
+                              color: Colors.orange,
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(width: 8),
-                      _StatChip(
-                        label: 'New',
-                        value: deck.newCardCount.toString(),
-                        color: Colors.blue,
-                      ),
-                      const SizedBox(width: 8),
-                      _StatChip(
-                        label: 'Due',
-                        value: deck.dueCardCount.toString(),
-                        color: Colors.orange,
-                      ),
-                      const Spacer(),
                       FilledButton.icon(
                         onPressed: deck.cardCount > 0
                             ? () => context.push(

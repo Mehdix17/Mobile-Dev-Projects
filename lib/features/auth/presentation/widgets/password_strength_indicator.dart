@@ -32,17 +32,19 @@ class PasswordStrengthCalculator {
     }
 
     int score = 0;
-    
+
     // Length check
     if (password.length >= 8) score++;
     if (password.length >= 12) score++;
-    
+
     // Character variety checks
     if (password.contains(RegExp(r'[a-z]'))) score++; // lowercase
     if (password.contains(RegExp(r'[A-Z]'))) score++; // uppercase
     if (password.contains(RegExp(r'[0-9]'))) score++; // numbers
-    if (password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) score++; // special chars
-    
+    if (password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+      score++; // special chars
+    }
+
     if (score <= 2) {
       return const PasswordStrengthData(
         strength: PasswordStrength.weak,

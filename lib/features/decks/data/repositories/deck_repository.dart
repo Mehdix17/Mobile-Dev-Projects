@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/deck_model.dart';
 
 class DeckRepository {
@@ -80,10 +81,38 @@ class DeckRepository {
   }
 
   Future<void> publishDeck(String deckId, bool isPublished) async {
+    final deckDoc = await _decksCollection.doc(deckId).get();
+
     await _decksCollection.doc(deckId).update({
       'isPublished': isPublished,
       'updatedAt': Timestamp.fromDate(DateTime.now()),
     });
+
+    // Sync with the shared community_decks collection
+    final communityRef =
+        _firestore.collection('community_decks').doc('${userId}_$deckId');
+    if (isPublished && deckDoc.exists) {
+      final data = deckDoc.data()!;
+      final user = _firestore.collection('users').doc(userId);
+      final userDoc = await user.get();
+      // Try Firestore doc first, then FirebaseAuth, then fallback
+      final userName = userDoc.data()?['displayName'] as String? ??
+          FirebaseAuth.instance.currentUser?.displayName ??
+          FirebaseAuth.instance.currentUser?.email ??
+          'Anonymous';
+      await communityRef.set({
+        ...data,
+        'isPublished': true,
+        'authorId': userId,
+        'authorName': userName,
+        'originalDeckId': deckId,
+        'publishedAt': Timestamp.fromDate(DateTime.now()),
+        'updatedAt': Timestamp.fromDate(DateTime.now()),
+      });
+    } else {
+      // Remove from community_decks when unpublishing
+      await communityRef.delete();
+    }
   }
 
   Future<List<DeckModel>> getStarredDecks() async {

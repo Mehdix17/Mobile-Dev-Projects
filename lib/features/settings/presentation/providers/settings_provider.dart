@@ -9,13 +9,11 @@ final settingsProvider = ChangeNotifierProvider<SettingsNotifier>((ref) {
 });
 
 class SettingsNotifier extends ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
   int _dailyNewCardLimit = 20;
   int _dailyReviewLimit = 100;
   bool _notificationsEnabled = true;
   TimeOfDay _reminderTime = const TimeOfDay(hour: 20, minute: 0);
-  bool _hapticFeedback = true;
-  bool _soundEnabled = true;
   int _newCardsPerDay = 20;
   int _reviewsPerDay = 100;
   String _cardDirectionMode = 'shuffle'; // 'shuffle', 'frontFirst', 'backFirst'
@@ -25,8 +23,6 @@ class SettingsNotifier extends ChangeNotifier {
   int get dailyReviewLimit => _dailyReviewLimit;
   bool get notificationsEnabled => _notificationsEnabled;
   TimeOfDay get reminderTime => _reminderTime;
-  bool get hapticFeedback => _hapticFeedback;
-  bool get soundEnabled => _soundEnabled;
   int get newCardsPerDay => _newCardsPerDay;
   int get reviewsPerDay => _reviewsPerDay;
   String get cardDirectionMode => _cardDirectionMode;
@@ -38,7 +34,7 @@ class SettingsNotifier extends ChangeNotifier {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final themeModeIndex = prefs.getInt(AppConstants.themeModePrefKey) ?? 0;
+    final themeModeIndex = prefs.getInt(AppConstants.themeModePrefKey) ?? 1;
     _themeMode = ThemeMode.values[themeModeIndex];
 
     _dailyNewCardLimit =
@@ -98,20 +94,6 @@ class SettingsNotifier extends ChangeNotifier {
       AppConstants.reminderTimePrefKey,
       '${time.hour}:${time.minute}',
     );
-    notifyListeners();
-  }
-
-  Future<void> setHapticFeedback(bool enabled) async {
-    _hapticFeedback = enabled;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('hapticFeedback', enabled);
-    notifyListeners();
-  }
-
-  Future<void> setSoundEnabled(bool enabled) async {
-    _soundEnabled = enabled;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('soundEnabled', enabled);
     notifyListeners();
   }
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../../../core/router/route_names.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
@@ -9,6 +11,38 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../providers/deck_provider.dart';
 import '../widgets/deck_card.dart';
 import '../../data/models/deck_model.dart';
+
+/// Language name → flag emoji mapping
+const Map<String, String> _languageFlags = {
+  'English': '🇬🇧',
+  'French': '🇫🇷',
+  'Spanish': '🇪🇸',
+  'German': '🇩🇪',
+  'Italian': '🇮🇹',
+  'Portuguese': '🇵🇹',
+  'Russian': '🇷🇺',
+  'Chinese': '🇨🇳',
+  'Japanese': '🇯🇵',
+  'Korean': '🇰🇷',
+  'Arabic': '🇸🇦',
+  'Hindi': '🇮🇳',
+  'Turkish': '🇹🇷',
+  'Dutch': '🇳🇱',
+  'Polish': '🇵🇱',
+  'Swedish': '🇸🇪',
+  'Norwegian': '🇳🇴',
+  'Danish': '🇩🇰',
+  'Finnish': '🇫🇮',
+  'Greek': '🇬🇷',
+  'Czech': '🇨🇿',
+  'Romanian': '🇷🇴',
+  'Hungarian': '🇭🇺',
+  'Ukrainian': '🇺🇦',
+  'Thai': '🇹🇭',
+  'Vietnamese': '🇻🇳',
+  'Indonesian': '🇮🇩',
+  'Malay': '🇲🇾',
+};
 
 class DeckListScreen extends ConsumerStatefulWidget {
   const DeckListScreen({super.key});
@@ -22,6 +56,45 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
   String _searchQuery = '';
   final Set<String> _selectedLabels = {};
   bool _showStarredOnly = false;
+  String _selectedLanguage = 'All';
+  String _selectedDifficulty = 'All';
+
+  // Multi-selection state
+  bool _isSelectionMode = false;
+  final Set<String> _selectedDeckIds = {};
+
+  void _enterSelectionMode(String deckId) {
+    setState(() {
+      _isSelectionMode = true;
+      _selectedDeckIds.add(deckId);
+    });
+  }
+
+  void _exitSelectionMode() {
+    setState(() {
+      _isSelectionMode = false;
+      _selectedDeckIds.clear();
+    });
+  }
+
+  void _toggleSelection(String deckId) {
+    setState(() {
+      if (_selectedDeckIds.contains(deckId)) {
+        _selectedDeckIds.remove(deckId);
+        if (_selectedDeckIds.isEmpty) {
+          _isSelectionMode = false;
+        }
+      } else {
+        _selectedDeckIds.add(deckId);
+      }
+    });
+  }
+
+  void _selectAll(List<DeckModel> decks) {
+    setState(() {
+      _selectedDeckIds.addAll(decks.map((d) => d.id));
+    });
+  }
 
   @override
   void dispose() {
@@ -52,15 +125,73 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
       filtered = filtered.where((deck) => deck.isStarred).toList();
     }
 
+    // Filter by language (match name, emoji → name, or language code)
+    if (_selectedLanguage != 'All') {
+      filtered = filtered.where((deck) {
+        final frontMatches = deck.frontLanguageName == _selectedLanguage ||
+            (deck.frontEmoji != null &&
+                _languageNameFromEmoji(deck.frontEmoji!) ==
+                    _selectedLanguage) ||
+            (deck.frontLanguageCode != null &&
+                deck.frontLanguageCode!.toUpperCase() ==
+                    _selectedLanguage.toUpperCase());
+
+        final backMatches = deck.backLanguageName == _selectedLanguage ||
+            (deck.backEmoji != null &&
+                _languageNameFromEmoji(deck.backEmoji!) == _selectedLanguage) ||
+            (deck.backLanguageCode != null &&
+                deck.backLanguageCode!.toUpperCase() ==
+                    _selectedLanguage.toUpperCase());
+
+        return frontMatches || backMatches;
+      }).toList();
+    }
+
+    // Filter by difficulty
+    if (_selectedDifficulty != 'All') {
+      filtered = filtered.where((deck) {
+        final diff = (deck.difficulty ?? '').toLowerCase();
+        return diff == _selectedDifficulty.toLowerCase();
+      }).toList();
+    }
+
     return filtered;
   }
 
-  Set<String> _getAllLabels(List<DeckModel> decks) {
-    final labels = <String>{};
-    for (final deck in decks) {
-      labels.addAll(deck.tags);
+  // Normalize language identifiers so the dropdown consistently shows `flag + name`.
+  String _languageNameFromEmoji(String emoji) {
+    for (final entry in _languageFlags.entries) {
+      if (entry.value == emoji) return entry.key;
     }
-    return labels;
+    return emoji; // fallback — will be shown as-is
+  }
+
+  List<String> _getAvailableLanguages(List<DeckModel> decks) {
+    final langs = <String>{};
+    for (final d in decks) {
+      // Front language: prefer explicit name, then resolve emoji → name, then code
+      if (d.frontLanguageName != null && d.frontLanguageName!.isNotEmpty) {
+        langs.add(d.frontLanguageName!);
+      } else if (d.frontEmoji != null && d.frontEmoji!.isNotEmpty) {
+        langs.add(_languageNameFromEmoji(d.frontEmoji!));
+      } else if (d.frontLanguageCode != null &&
+          d.frontLanguageCode!.isNotEmpty) {
+        langs.add(d.frontLanguageCode!.toUpperCase());
+      }
+
+      // Back language: same order
+      if (d.backLanguageName != null && d.backLanguageName!.isNotEmpty) {
+        langs.add(d.backLanguageName!);
+      } else if (d.backEmoji != null && d.backEmoji!.isNotEmpty) {
+        langs.add(_languageNameFromEmoji(d.backEmoji!));
+      } else if (d.backLanguageCode != null && d.backLanguageCode!.isNotEmpty) {
+        langs.add(d.backLanguageCode!.toUpperCase());
+      }
+    }
+
+    // Ensure deterministic ordering and no duplicates
+    final sorted = langs.toList()..sort();
+    return ['All', ...sorted];
   }
 
   @override
@@ -68,11 +199,10 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
     final theme = Theme.of(context);
     final decksAsync = ref.watch(deckListProvider);
 
-    return Scaffold(
+    final Widget body = Scaffold(
       body: decksAsync.when(
         data: (allDecks) {
           final filteredDecks = _filterDecks(allDecks);
-          final allLabels = _getAllLabels(allDecks);
           final starredDecks = allDecks.where((d) => d.isStarred).toList();
 
           return RefreshIndicator(
@@ -85,21 +215,61 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
                 SliverAppBar(
                   floating: true,
                   snap: true,
-                  title: const Text('My Decks'),
-                  actions: [
-                    IconButton(
-                      icon: Icon(
-                        _showStarredOnly ? Icons.star : Icons.star_outline,
-                        color: _showStarredOnly ? Colors.amber : null,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _showStarredOnly = !_showStarredOnly;
-                        });
-                      },
-                      tooltip: _showStarredOnly ? 'Show All' : 'Show Starred',
-                    ),
-                  ],
+                  leading: _isSelectionMode
+                      ? IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: _exitSelectionMode,
+                        )
+                      : null,
+                  title: _isSelectionMode
+                      ? Text('${_selectedDeckIds.length} selected')
+                      : const Text('My Decks'),
+                  actions: _isSelectionMode
+                      ? [
+                          IconButton(
+                            icon: const Icon(Icons.select_all),
+                            tooltip: 'Select All',
+                            onPressed: () => _selectAll(filteredDecks),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.star_outline),
+                            tooltip: 'Star Selected',
+                            onPressed: _selectedDeckIds.isEmpty
+                                ? null
+                                : () => _bulkToggleStar(allDecks),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.publish),
+                            tooltip: 'Publish Selected',
+                            onPressed: _selectedDeckIds.isEmpty
+                                ? null
+                                : () => _bulkPublish(allDecks),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            tooltip: 'Delete Selected',
+                            onPressed: _selectedDeckIds.isEmpty
+                                ? null
+                                : () => _bulkDelete(allDecks),
+                          ),
+                        ]
+                      : [
+                          IconButton(
+                            icon: Icon(
+                              _showStarredOnly
+                                  ? Icons.star
+                                  : Icons.star_outline,
+                              color: _showStarredOnly ? Colors.amber : null,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _showStarredOnly = !_showStarredOnly;
+                              });
+                            },
+                            tooltip:
+                                _showStarredOnly ? 'Show All' : 'Show Starred',
+                          ),
+                        ],
                 ),
 
                 // Search Bar
@@ -137,47 +307,64 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
                   ),
                 ),
 
-                // Label Filters
-                if (allLabels.isNotEmpty)
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: 50,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: allLabels.length,
-                        itemBuilder: (context, index) {
-                          final label = allLabels.elementAt(index);
-                          final isSelected = _selectedLabels.contains(label);
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: FilterChip(
-                              label: Text(label),
-                              selected: isSelected,
-                              onSelected: (selected) {
-                                setState(() {
-                                  if (selected) {
-                                    _selectedLabels.add(label);
-                                  } else {
-                                    _selectedLabels.remove(label);
-                                  }
-                                });
-                              },
+                // Language & Difficulty Filters
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Builder(
+                      builder: (context) {
+                        // compute available languages and ensure the selected value
+                        // is valid (prevents DropdownButton assertion after deletes)
+                        final availableLanguages =
+                            _getAvailableLanguages(allDecks);
+                        if (!availableLanguages.contains(_selectedLanguage)) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted) {
+                              setState(() => _selectedLanguage = 'All');
+                            }
+                          });
+                        }
+
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: _DeckLanguageFilter(
+                                value: availableLanguages
+                                        .contains(_selectedLanguage)
+                                    ? _selectedLanguage
+                                    : 'All',
+                                items: availableLanguages,
+                                onChanged: (v) =>
+                                    setState(() => _selectedLanguage = v),
+                              ),
                             ),
-                          );
-                        },
-                      ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _DeckDifficultyFilter(
+                                value: _selectedDifficulty,
+                                onChanged: (v) =>
+                                    setState(() => _selectedDifficulty = v),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
+                ),
 
                 // Active Filters Summary
                 if (_selectedLabels.isNotEmpty ||
                     _showStarredOnly ||
-                    _searchQuery.isNotEmpty)
+                    _searchQuery.isNotEmpty ||
+                    _selectedLanguage != 'All' ||
+                    _selectedDifficulty != 'All')
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8,),
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       child: Row(
                         children: [
                           Text(
@@ -189,7 +376,9 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
                           const Spacer(),
                           if (_selectedLabels.isNotEmpty ||
                               _showStarredOnly ||
-                              _searchQuery.isNotEmpty)
+                              _searchQuery.isNotEmpty ||
+                              _selectedLanguage != 'All' ||
+                              _selectedDifficulty != 'All')
                             TextButton.icon(
                               onPressed: () {
                                 setState(() {
@@ -197,6 +386,8 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
                                   _showStarredOnly = false;
                                   _searchQuery = '';
                                   _searchController.clear();
+                                  _selectedLanguage = 'All';
+                                  _selectedDifficulty = 'All';
                                 });
                               },
                               icon: const Icon(Icons.clear_all, size: 16),
@@ -234,30 +425,27 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
                     starredDecks.isNotEmpty &&
                     _searchQuery.isEmpty &&
                     _selectedLabels.isEmpty)
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: 200,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: starredDecks.length,
-                        itemBuilder: (context, index) {
-                          return SizedBox(
-                            width: 160,
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 12),
-                              child: DeckCard(
-                                deck: starredDecks[index],
-                                onDelete: () =>
-                                    _deleteDeck(starredDecks[index]),
-                                onToggleStar: () =>
-                                    _toggleStarred(starredDecks[index]),
-                                onPublish: () =>
-                                    _publishDeck(starredDecks[index]),
-                              ),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final deck = starredDecks[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: DeckCard(
+                              deck: deck,
+                              isSelectionMode: _isSelectionMode,
+                              isSelected: _selectedDeckIds.contains(deck.id),
+                              onSelect: () => _toggleSelection(deck.id),
+                              onLongPress: () => _enterSelectionMode(deck.id),
+                              onDelete: () => _deleteDeck(deck),
+                              onToggleStar: () => _toggleStarred(deck),
+                              onPublish: () => _publishDeck(deck),
                             ),
                           );
                         },
+                        childCount: starredDecks.length,
                       ),
                     ),
                   ),
@@ -289,31 +477,33 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
                                   _selectedLabels.isNotEmpty)
                               ? 'Try adjusting your filters'
                               : 'Create your first deck to start learning!',
-                      actionLabel: _showStarredOnly ? null : 'Create Deck',
-                      onAction: _showStarredOnly
-                          ? null
-                          : () => _showNewDeckOptions(context),
+                      // remove in-card "Create Deck" button — there's already
+                      // a floating action button at the bottom-right
+                      actionLabel: null,
+                      onAction: null,
                     ),
                   )
                 else
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.85,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
+                    sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
-                        (context, index) => DeckCard(
-                          deck: filteredDecks[index],
-                          onDelete: () => _deleteDeck(filteredDecks[index]),
-                          onToggleStar: () =>
-                              _toggleStarred(filteredDecks[index]),
-                          onPublish: () => _publishDeck(filteredDecks[index]),
-                        ),
+                        (context, index) {
+                          final deck = filteredDecks[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: DeckCard(
+                              deck: deck,
+                              isSelectionMode: _isSelectionMode,
+                              isSelected: _selectedDeckIds.contains(deck.id),
+                              onSelect: () => _toggleSelection(deck.id),
+                              onLongPress: () => _enterSelectionMode(deck.id),
+                              onDelete: () => _deleteDeck(deck),
+                              onToggleStar: () => _toggleStarred(deck),
+                              onPublish: () => _publishDeck(deck),
+                            ),
+                          );
+                        },
                         childCount: filteredDecks.length,
                       ),
                     ),
@@ -351,6 +541,18 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
         label: const Text('New Deck'),
       ),
     );
+
+    // Wrap with PopScope only in selection mode
+    if (_isSelectionMode) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _exitSelectionMode();
+        },
+        child: body,
+      );
+    }
+    return body;
   }
 
   void _deleteDeck(DeckModel deck) async {
@@ -359,7 +561,8 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Delete Deck'),
         content: Text(
-            'Are you sure you want to delete "${deck.name}"? This will also delete all cards in this deck.',),
+          'Are you sure you want to delete "${deck.name}"? This will also delete all cards in this deck.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -392,7 +595,8 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              deck.isStarred ? 'Removed from starred' : 'Added to starred',),
+            deck.isStarred ? 'Removed from starred' : 'Added to starred',
+          ),
           duration: const Duration(seconds: 1),
         ),
       );
@@ -400,6 +604,40 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
   }
 
   void _publishDeck(DeckModel deck) async {
+    // Guest mode check
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || user.isAnonymous) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.lock_outline, color: Colors.white, size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text('Sign in to publish decks to the marketplace'),
+                ),
+              ],
+            ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.orange.shade700,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+      return;
+    }
+
+    if (deck.isPredefined) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Predefined decks are already on the marketplace'),
+        ),
+      );
+      return;
+    }
+
     if (deck.isPublished) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Deck is already published')),
@@ -407,12 +645,78 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
       return;
     }
 
+    await ref.read(deckListProvider.notifier).publishDeck(deck.id, true);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${deck.name} published to marketplace')),
+      );
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Bulk actions
+  // ---------------------------------------------------------------------------
+
+  Future<void> _bulkToggleStar(List<DeckModel> allDecks) async {
+    final selected =
+        allDecks.where((d) => _selectedDeckIds.contains(d.id)).toList();
+    final notifier = ref.read(deckListProvider.notifier);
+    await notifier.bulkToggleStar(
+      selected.map((d) => d.id).toList(),
+      selected.map((d) => !d.isStarred).toList(),
+    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Toggled star for ${selected.length} deck(s)')),
+      );
+      _exitSelectionMode();
+    }
+  }
+
+  Future<void> _bulkPublish(List<DeckModel> allDecks) async {
+    // Guest mode check
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || user.isAnonymous) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.lock_outline, color: Colors.white, size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text('Sign in to publish decks to the marketplace'),
+                ),
+              ],
+            ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.orange.shade700,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+      return;
+    }
+
+    final selected =
+        allDecks.where((d) => _selectedDeckIds.contains(d.id)).toList();
+    final unpublished = selected.where((d) => !d.isPublished).toList();
+    if (unpublished.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('All selected decks are already published'),
+        ),
+      );
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Publish Deck'),
-        content: Text(
-            'Publish "${deck.name}" to the marketplace? Other users will be able to see and import it.',),
+        title: const Text('Publish Decks'),
+        content:
+            Text('Publish ${unpublished.length} deck(s) to the marketplace?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -427,11 +731,48 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
     );
 
     if (confirmed == true && mounted) {
-      await ref.read(deckListProvider.notifier).publishDeck(deck.id, true);
+      final notifier = ref.read(deckListProvider.notifier);
+      await notifier.bulkPublish(unpublished.map((d) => d.id).toList());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${deck.name} published to marketplace')),
+          SnackBar(content: Text('${unpublished.length} deck(s) published')),
         );
+        _exitSelectionMode();
+      }
+    }
+  }
+
+  Future<void> _bulkDelete(List<DeckModel> allDecks) async {
+    final count = _selectedDeckIds.length;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Decks'),
+        content: Text(
+          'Are you sure you want to delete $count deck(s)? This will also delete all cards in these decks.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final notifier = ref.read(deckListProvider.notifier);
+      await notifier.bulkDelete(_selectedDeckIds.toList());
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$count deck(s) deleted')),
+        );
+        _exitSelectionMode();
       }
     }
   }
@@ -443,6 +784,202 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => const _NewDeckOptionsSheet(),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Filter widgets for deck list
+// ---------------------------------------------------------------------------
+
+class _DeckLanguageFilter extends StatelessWidget {
+  final String value;
+  final List<String> items;
+  final ValueChanged<String> onChanged;
+
+  const _DeckLanguageFilter({
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isActive = value != 'All';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: isActive
+            ? theme.colorScheme.primary.withValues(alpha: 0.06)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isActive
+              ? theme.colorScheme.primary.withValues(alpha: 0.3)
+              : theme.colorScheme.outlineVariant,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          icon: Icon(
+            Icons.keyboard_arrow_down,
+            // ignore: require_trailing_commas
+            size: 20,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          isDense: true,
+          isExpanded: true,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface,
+          ),
+          items: items.map((lang) {
+            // Lookup flag by language name; if lang itself is a flag emoji, use it.
+            String? flag = _languageFlags[lang];
+            final isEmoji =
+                RegExp(r'[\u{1F1E6}-\u{1F1FF}]', unicode: true).hasMatch(lang);
+            if (flag == null && isEmoji) flag = lang;
+
+            return DropdownMenuItem(
+              value: lang,
+              child: Row(
+                children: [
+                  if (lang == 'All')
+                    Icon(
+                      Icons.translate,
+                      size: 16,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    )
+                  else
+                    Text(flag ?? '🏳️', style: const TextStyle(fontSize: 18)),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      lang,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight:
+                            lang == value ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _DeckDifficultyFilter extends StatelessWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  const _DeckDifficultyFilter({
+    required this.value,
+    required this.onChanged,
+  });
+
+  static const _items = ['All', 'Beginner', 'Intermediate', 'Advanced'];
+
+  static Color _color(String item) {
+    switch (item.toLowerCase()) {
+      case 'beginner':
+        return Colors.green;
+      case 'intermediate':
+        return Colors.orange;
+      case 'advanced':
+        return Colors.redAccent;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  static IconData _icon(String item) {
+    switch (item.toLowerCase()) {
+      case 'beginner':
+        return Icons.signal_cellular_alt_1_bar;
+      case 'intermediate':
+        return Icons.signal_cellular_alt_2_bar;
+      case 'advanced':
+        return Icons.signal_cellular_alt;
+      default:
+        return Icons.signal_cellular_alt;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isActive = value != 'All';
+    final activeColor = isActive ? _color(value) : Colors.grey;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color:
+            isActive ? activeColor.withValues(alpha: 0.06) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isActive
+              ? activeColor.withValues(alpha: 0.3)
+              : theme.colorScheme.outlineVariant,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          icon: Icon(
+            Icons.keyboard_arrow_down,
+            size: 20,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          isDense: true,
+          isExpanded: true,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface,
+          ),
+          items: _items.map((item) {
+            final itemColor = _color(item);
+            return DropdownMenuItem(
+              value: item,
+              child: Row(
+                children: [
+                  Icon(
+                    _icon(item),
+                    size: 16,
+                    color: item == 'All'
+                        ? theme.colorScheme.onSurfaceVariant
+                        : itemColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    item,
+                    style: TextStyle(
+                      color: item == 'All'
+                          ? theme.colorScheme.onSurface
+                          : itemColor,
+                      fontWeight:
+                          item == value ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+        ),
+      ),
     );
   }
 }

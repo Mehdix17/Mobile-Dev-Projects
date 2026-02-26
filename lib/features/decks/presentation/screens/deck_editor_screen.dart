@@ -21,10 +21,10 @@ class _DeckEditorScreenState extends ConsumerState<DeckEditorScreen> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
 
-  DeckColor _selectedColor = DeckColor.blue;
   String _selectedIcon = '📚';
   String? _frontLanguage;
   String? _backLanguage;
+  String? _selectedDifficulty;
   bool _isLoading = false;
   DeckModel? _existingDeck;
 
@@ -75,7 +75,6 @@ class _DeckEditorScreenState extends ConsumerState<DeckEditorScreen> {
         _existingDeck = deck;
         _nameController.text = deck.name;
         _descriptionController.text = deck.description;
-        _selectedColor = deck.color;
         _selectedIcon = deck.icon;
         // Find language from emoji
         _frontLanguage = deck.frontEmoji != null
@@ -96,6 +95,7 @@ class _DeckEditorScreenState extends ConsumerState<DeckEditorScreen> {
             : null;
         if (_frontLanguage?.isEmpty == true) _frontLanguage = null;
         if (_backLanguage?.isEmpty == true) _backLanguage = null;
+        _selectedDifficulty = deck.difficulty;
       });
     }
   }
@@ -133,9 +133,11 @@ class _DeckEditorScreenState extends ConsumerState<DeckEditorScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Preview card
-            _buildPreviewCard(theme),
-            const SizedBox(height: 24),
+            // show preview only when editing an existing deck — for New Deck the name field should be first
+            if (isEditing) ...[
+              _buildPreviewCard(theme),
+              const SizedBox(height: 24),
+            ],
 
             // Name field
             TextFormField(
@@ -259,42 +261,100 @@ class _DeckEditorScreenState extends ConsumerState<DeckEditorScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Color selector
+            // Difficulty selector
             Text(
-              'Color',
+              'Difficulty (optional)',
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: DeckColor.values.map((color) {
-                final isSelected = color == _selectedColor;
-                return InkWell(
-                  onTap: () => setState(() => _selectedColor = color),
+            DropdownButtonFormField<String?>(
+              initialValue: _selectedDifficulty,
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Color(color.colorValue),
-                      borderRadius: BorderRadius.circular(12),
-                      border: isSelected
-                          ? Border.all(
-                              color: theme.colorScheme.onSurface,
-                              width: 3,
-                            )
-                          : null,
-                    ),
-                    child: isSelected
-                        ? const Icon(Icons.check, color: Colors.white)
-                        : null,
+                ),
+              ),
+              isExpanded: true,
+              items: const [
+                DropdownMenuItem(
+                  value: null,
+                  child: Text('None', style: TextStyle(fontSize: 14)),
+                ),
+                DropdownMenuItem(
+                  value: 'beginner',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.signal_cellular_alt_1_bar,
+                        size: 18,
+                        color: Colors.green,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Beginner',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.green,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              }).toList(),
+                ),
+                DropdownMenuItem(
+                  value: 'intermediate',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.signal_cellular_alt_2_bar,
+                        size: 18,
+                        color: Colors.orange,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Intermediate',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.orange,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'advanced',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.signal_cellular_alt,
+                        size: 18,
+                        color: Colors.redAccent,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Advanced',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              onChanged: (value) {
+                setState(() => _selectedDifficulty = value);
+              },
             ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -302,26 +362,58 @@ class _DeckEditorScreenState extends ConsumerState<DeckEditorScreen> {
   }
 
   Widget _buildPreviewCard(ThemeData theme) {
-    final color = Color(_selectedColor.colorValue);
     final name =
         _nameController.text.isEmpty ? 'Deck Name' : _nameController.text;
+    final bool editing = _existingDeck != null;
 
+    if (editing) {
+      final color = Color(_existingDeck!.color.colorValue);
+      return Container(
+        height: 120,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [color.withValues(alpha: 0.8), color],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(_selectedIcon, style: const TextStyle(fontSize: 32)),
+              Text(
+                name,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // New deck — neutral preview (no selectable color)
     return Container(
       height: 120,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [color.withValues(alpha: 0.8), color],
-        ),
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: theme.colorScheme.outline),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -333,7 +425,7 @@ class _DeckEditorScreenState extends ConsumerState<DeckEditorScreen> {
             Text(
               name,
               style: theme.textTheme.titleMedium?.copyWith(
-                color: Colors.white,
+                color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
               ),
               maxLines: 1,
@@ -358,12 +450,12 @@ class _DeckEditorScreenState extends ConsumerState<DeckEditorScreen> {
         final updated = _existingDeck!.copyWith(
           name: _nameController.text.trim(),
           description: _descriptionController.text.trim(),
-          color: _selectedColor,
           icon: _selectedIcon,
           frontEmoji:
               _frontLanguage != null ? _languageFlags[_frontLanguage] : null,
           backEmoji:
               _backLanguage != null ? _languageFlags[_backLanguage] : null,
+          difficulty: _selectedDifficulty,
           updatedAt: now,
         );
         await ref.read(deckListProvider.notifier).updateDeck(updated);
@@ -372,12 +464,12 @@ class _DeckEditorScreenState extends ConsumerState<DeckEditorScreen> {
         final deck = DeckModel.create(
           name: _nameController.text.trim(),
           description: _descriptionController.text.trim(),
-          color: _selectedColor,
           icon: _selectedIcon,
           frontEmoji:
               _frontLanguage != null ? _languageFlags[_frontLanguage] : null,
           backEmoji:
               _backLanguage != null ? _languageFlags[_backLanguage] : null,
+          difficulty: _selectedDifficulty,
         );
         await ref.read(deckListProvider.notifier).createDeck(deck);
       }
@@ -456,12 +548,20 @@ class _DeckEditorScreenState extends ConsumerState<DeckEditorScreen> {
                 value: language,
                 child: Row(
                   children: [
-                    Text(
-                      _languageFlags[language]!,
-                      style: const TextStyle(fontSize: 20),
+                    // flag emoji — slightly smaller to save horizontal space
+                    Text(_languageFlags[language]!,
+                        style: const TextStyle(fontSize: 18),),
+                    const SizedBox(width: 8),
+
+                    // Make the language label flexible and ellipsize long names
+                    Expanded(
+                      child: Text(
+                        language,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: const TextStyle(fontSize: 14),
+                      ),
                     ),
-                    const SizedBox(width: 12),
-                    Text(language),
                   ],
                 ),
               );

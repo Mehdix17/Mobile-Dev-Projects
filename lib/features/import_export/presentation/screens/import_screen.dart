@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -30,6 +31,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final bool isCompact = MediaQuery.of(context).size.height < 700;
 
     return Scaffold(
       appBar: AppBar(
@@ -38,33 +40,23 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       body: Stack(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(isCompact ? 8 : 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Import cards from various formats',
-                  style: theme.textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Add flashcards to your collection by importing from files',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _ImportOptionCard(
-                  icon: Icons.table_chart,
-                  title: 'Import from CSV',
-                  description:
-                      'Import cards from CSV file. Supports basic, image, and triple cards with hints',
-                  onTap: _isLoading ? null : () => _importFromCsv(),
-                ),
-                const SizedBox(height: 24),
+                // Title & description moved into the CSV help card (keeps the top area compact)
+                SizedBox(height: isCompact ? 6 : 8),
+
+                // Detailed format/help text (kept visible on the screen)
+                _buildCsvFormatHelp(theme),
+
+                const SizedBox(height: 20),
+
+                // status (shows parse/import progress or errors)
                 if (_statusMessage.isNotEmpty)
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    width: double.infinity,
+                    padding: EdgeInsets.all(isCompact ? 8 : 12),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(8),
@@ -72,28 +64,33 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                     child: Row(
                       children: [
                         if (_isLoading)
-                          const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                          SizedBox(
+                            width: isCompact ? 18 : 20,
+                            height: isCompact ? 18 : 20,
+                            child:
+                                const CircularProgressIndicator(strokeWidth: 2),
                           )
                         else
                           Icon(
                             Icons.info_outline,
                             color: theme.colorScheme.primary,
                           ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: isCompact ? 8 : 12),
                         Expanded(
                           child: Text(
                             _statusMessage,
-                            style: theme.textTheme.bodyMedium,
+                            style: isCompact
+                                ? theme.textTheme.bodySmall
+                                : theme.textTheme.bodyMedium,
                           ),
                         ),
                       ],
                     ),
                   ),
-                const Spacer(),
-                _buildCsvFormatHelp(theme),
+
+                SizedBox(height: isCompact ? 8 : 18),
+
+                const SizedBox(height: 4),
               ],
             ),
           ),
@@ -106,71 +103,211 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
             ),
         ],
       ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(isCompact ? 8 : 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Transform.translate(
+                offset: Offset(0, isCompact ? -8 : -28),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isCompact ? 300 : 420,
+                    minWidth: isCompact ? 180 : 260,
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: _isLoading ? null : _importFromCsv,
+                    icon: const Icon(Icons.file_upload),
+                    label: const Text('Import'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      padding: EdgeInsets.symmetric(
+                        vertical: isCompact ? 14 : 22,
+                        horizontal: 22,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(36),
+                      ),
+                      elevation: 8,
+                      textStyle: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildCsvFormatHelp(ThemeData theme) {
+    final bool isCompact = MediaQuery.of(context).size.height < 700;
+
+    if (isCompact) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // moved title + description into the compact card
+              Text(
+                'Import flashcards — CSV only',
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '• Headers auto-detected \n• Hints allowed \n• Images not supported',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 8),
+
+              Text(
+                'front,back · front,back,frontHint,backHint · face1,face2,face3',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(fontFamily: 'monospace', height: 1.1),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Images NOT supported',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.error),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(isCompact ? 8 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // move the screen title + short description into the card (desktop/regular layout)
+            Text(
+              'Notes',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '• Only CSV files are supported \n• Headers auto-detected \n• Hints allowed \n• Images not supported',
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+            SizedBox(height: isCompact ? 6 : 12),
+
+            // Basic example (grouped)
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.help_outline, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  'CSV Format Guide',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '\n✏️ Basic',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'front,back,frontHint,backHint,label',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(fontFamily: 'monospace'),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
+
+            // Triple example (grouped)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '\n🔺 Triple',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'face1,face2,face3,hint,label',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(fontFamily: 'monospace'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Examples (explicit CSV rows)
             Text(
-              'Supported card types:',
+              '\nExamples',
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
 
-            // Basic cards
-            Text(
-              '✏️ Basic: front,back,frontHint,backHint',
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontFamily: 'monospace',
+            Container(
+              width: double.infinity,
+              // padding: EdgeInsets.all(isCompact ? 6 : 8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
               ),
-            ),
-            const SizedBox(height: 4),
-
-            // Image cards
-            Text(
-              '🖼️ Image: imageUrl,word,frontHint,backHint',
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontFamily: 'monospace',
-              ),
-            ),
-            const SizedBox(height: 4),
-
-            // Triple cards
-            Text(
-              '🔺 Triple: face1,face2,face3,frontHint',
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontFamily: 'monospace',
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            Text(
-              '• Headers are auto-detected\n'
-              '• Hints are optional\n'
-              '• Card type detected from columns\n'
-              '• Use quotes for text with commas',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '\nRow (Basic with hints):',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    'front,back,frontHint,backHint,label\nHello,Bonjour,B******,H****,noun',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(fontFamily: 'monospace'),
+                  ),
+                  Text(
+                    '\nTriple example:',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    'bill,facture,فاتورة,optionalHint,noun',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(fontFamily: 'monospace'),
+                  ),
+                  Text(
+                    '\nFields with commas:',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    '"New York City","NYC",hints...,noun',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(fontFamily: 'monospace'),
+                  ),
+                ],
               ),
             ),
           ],
@@ -181,14 +318,19 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
 
   Future<void> _importFromCsv() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['csv'],
+      // On Android SAF/Drive often greys out .csv when strict filtering is used.
+      // Use a permissive picker on Android to avoid that issue; keep strict
+      // CSV filtering on other platforms.
+      final usePermissivePicker = Platform.isAndroid;
+
+      final FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: usePermissivePicker ? FileType.any : FileType.custom,
+        allowedExtensions: usePermissivePicker ? null : ['csv'],
         allowMultiple: false,
       );
 
       if (result == null || result.files.isEmpty) {
-        return;
+        return; // user cancelled or no file chosen
       }
 
       setState(() {
@@ -196,10 +338,40 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         _statusMessage = 'Reading file...';
       });
 
-      final file = File(result.files.single.path!);
-      final contents = await file.readAsString();
+      final picked = result.files.single;
+      final fileName = picked.name;
 
-      await _parseAndImportCsv(contents, result.files.single.name);
+      String contents;
+
+      // If the picker returned raw bytes (common for cloud providers), use them.
+      if (picked.bytes != null) {
+        contents = utf8.decode(picked.bytes!);
+      } else if (picked.path != null && picked.path!.isNotEmpty) {
+        // Local file path available
+        contents = await File(picked.path!).readAsString();
+      } else {
+        setState(() {
+          _isLoading = false;
+          _statusMessage = 'Selected file could not be read';
+        });
+        if (mounted) context.showErrorSnackBar('Could not read selected file');
+        return;
+      }
+
+      // Validate: accept explicit .csv OR accept permissive picks that *look* like CSV
+      final ext = (picked.extension ?? '').toLowerCase();
+      final looksLikeCsv = contents.contains(',');
+
+      if (ext != 'csv' && !looksLikeCsv) {
+        setState(() {
+          _isLoading = false;
+          _statusMessage = 'Please select a valid .csv file';
+        });
+        if (mounted) context.showErrorSnackBar('Please select a .csv file');
+        return;
+      }
+
+      await _parseAndImportCsv(contents, fileName);
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -245,6 +417,32 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     final headers =
         firstRow.map((col) => col.toString().toLowerCase().trim()).toList();
 
+    // Reject CSVs that include image columns or image URLs — import does not support images
+    final hasImageHeader =
+        headers.any((h) => h.contains('image')) || headers.contains('imageurl');
+    final hasImageUrlInData = rows.any(
+      (r) => r.any(
+        (c) =>
+            c.toString().toLowerCase().startsWith('http://') ||
+            c.toString().toLowerCase().startsWith('https://'),
+      ),
+    );
+    if (hasImageHeader || hasImageUrlInData) {
+      setState(
+        () {
+          _isLoading = false;
+          _statusMessage =
+              'Import aborted: image columns / URLs are not supported. Remove image fields and try again.';
+        },
+      );
+      if (mounted) {
+        context.showErrorSnackBar(
+          'Image import is not supported — remove image columns/URLs and retry.',
+        );
+      }
+      return;
+    }
+
     CardType detectedType = CardType.basic;
     int startIndex = 0;
     Map<String, int> columnMap = {};
@@ -252,7 +450,19 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     // Check if first row is a header by looking for known column names
     if (_isHeaderRow(headers)) {
       startIndex = 1;
+      // do NOT treat headers with image columns as image card types — images aren't supported
       detectedType = _detectCardType(headers);
+      if (detectedType == CardType.wordImage) {
+        // enforce rejection as a safety net
+        setState(() {
+          _isLoading = false;
+          _statusMessage = 'Import aborted: image cards are not supported.';
+        });
+        if (mounted) {
+          context.showErrorSnackBar('Image card import is not supported.');
+        }
+        return;
+      }
       columnMap = _buildColumnMap(headers, detectedType);
     } else {
       // No header - infer type from number of columns
@@ -260,7 +470,18 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         // Check if column 3 looks like a URL or text
         final thirdCol = firstRow[2].toString().trim();
         if (thirdCol.startsWith('http://') || thirdCol.startsWith('https://')) {
-          detectedType = CardType.basic; // Treat as basic with hints
+          // looks like an image URL — reject import
+          setState(() {
+            _isLoading = false;
+            _statusMessage =
+                'Import aborted: image URLs detected in data and image import is not supported.';
+          });
+          if (mounted) {
+            context.showErrorSnackBar(
+              'Image URLs detected — image import not supported.',
+            );
+          }
+          return;
         } else {
           detectedType = CardType.threeFaces; // 3 columns = triple card
         }
@@ -327,7 +548,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     // Create cards based on detected type
     final cards = validRows.map((row) {
       return _createCardFromRow(
-          row, createdDeck.id, detectedType, columnMap, now,);
+        row,
+        createdDeck.id,
+        detectedType,
+        columnMap,
+        now,
+      );
     }).toList();
 
     await cardRepo.batchCreateCards(cards);
@@ -345,7 +571,8 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
 
     if (mounted) {
       context.showSuccessSnackBar(
-          'Imported ${cards.length} ${detectedType.displayName} cards!',);
+        'Imported ${cards.length} ${detectedType.displayName} cards!',
+      );
     }
   }
 
@@ -379,10 +606,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       return CardType.threeFaces;
     }
 
-    // Check for image card
-    if (headers.contains('imageurl') || headers.contains('image')) {
-      return CardType.wordImage;
-    }
+    // Do NOT detect image cards here — image imports are unsupported.
 
     // Default to basic
     return CardType.basic;
@@ -478,7 +702,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   }
 
   bool _isValidRow(
-      List<dynamic> row, CardType type, Map<String, int> columnMap,) {
+    List<dynamic> row,
+    CardType type,
+    Map<String, int> columnMap,
+  ) {
     switch (type) {
       case CardType.basic:
         final frontIdx = columnMap['front'] ?? 0;
@@ -621,34 +848,5 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       case CardType.threeFaces:
         return '🔺';
     }
-  }
-}
-
-class _ImportOptionCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
-  final VoidCallback? onTap;
-
-  const _ImportOptionCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      child: ListTile(
-        leading: Icon(icon, size: 32, color: theme.colorScheme.primary),
-        title: Text(title),
-        subtitle: Text(description),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: onTap,
-      ),
-    );
   }
 }
